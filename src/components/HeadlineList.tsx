@@ -1,110 +1,140 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import type { SupabaseClient } from '@supabase/supabase-js'
-import HeadlineCard from './HeadlineCard'
+import { createClient } from '@/lib/supabase/client'
 import { Headline } from '@/types'
-import { handleSupabaseError, handleNetworkError, AppError } from '@/lib/error-handling'
+import HeadlineCard from './HeadlineCard'
+import AdminHeadlineCard from './AdminHeadlineCard'
 
 interface HeadlineListProps {
-  supabase: SupabaseClient
-  category: 'breaking' | 'high-priority' | 'worth-reading' | 'also-happening'
+  supabase: ReturnType<typeof createClient>
+  status: 'published' | 'pending' | 'draft'
   limit?: number
   sectionTitle?: string
+  isAdmin?: boolean
 }
 
 export default function HeadlineList({ 
   supabase, 
-  category, 
+  status, 
   limit = 5, 
-  sectionTitle 
+  sectionTitle,
+  isAdmin = false
 }: HeadlineListProps) {
   const [headlines, setHeadlines] = useState<Headline[]>([])
-  const [error, setError] = useState<AppError | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    async function fetchHeadlines() {
-      try {
-        setIsLoading(true)
-        setError(null)
+  const fetchHeadlines = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      let query = supabase
+        .from('headlines')
+        .select('*')
+        .order('published_at', { ascending: false })
+        .limit(limit)
 
-        const { data, error: supabaseError } = await supabase
-          .from('headlines')
-          .select('*')
-          .eq('category', category)
-          .order('created_at', { ascending: false })
-          .limit(limit)
-
-        if (supabaseError) {
-          handleSupabaseError(supabaseError)
-        }
-
-        setHeadlines(data || [])
-      } catch (err) {
-        if (err instanceof AppError) {
-          setError(err)
-        } else if (err instanceof Error) {
-          handleNetworkError(err)
-        }
-      } finally {
-        setIsLoading(false)
+      // Apply filters based on status
+      if (status === 'published') {
+        query = query
+          .eq('is_published', true)
+          .eq('published', true)
+          .eq('moderation_status', 'approved')
+      } else if (status === 'pending') {
+        query = query
+          .eq('is_published', false)
+          .eq('published', false)
+          .eq('moderation_status', 'pending')
+      } else if (status === 'draft') {
+        query = query
+          .eq('is_published', false)
+          .eq('published', false)
+          .eq('draft', true)
       }
+
+      const { data, error } = await query
+
+      if (error) {
+        console.error('Supabase error:', error)
+        throw new Error(error.message)
+      }
+
+      if (!data) {
+        throw new Error('No data returned from database')
+      }
+
+      setHeadlines(data)
+    } catch (err) {
+      console.error('Error fetching headlines:', err)
+      setError(err instanceof Error ? err.message : 'Failed to load headlines')
+    } finally {
+      setLoading(false)
     }
-
-    fetchHeadlines()
-  }, [category, limit, supabase])
-
-  if (error) {
-    return (
-      <div 
-        role="alert" 
-        className="p-4 bg-red-900/50 border border-red-500 rounded-lg"
-        aria-live="assertive"
-      >
-        <h3 className="text-lg font-semibold text-red-500 mb-2">
-          Error loading headlines
-        </h3>
-        <p className="text-gray-300">{error.message}</p>
-      </div>
-    )
   }
 
-  if (isLoading) {
+  useEffect(() => {
+    fetchHeadlines()
+  }, [status, limit])
+
+  if (loading) {
     return (
-      <div 
-        role="status" 
-        className="space-y-4 animate-pulse"
-        aria-label="Loading headlines"
-      >
+      <div className="space-y-4">
         {[...Array(limit)].map((_, i) => (
-          <div key={i} className="h-32 bg-gray-800 rounded-lg" />
+          <div 
+            key={i}
+            className="bg-zinc-800 rounded-lg p-4 animate-pulse"
+          >
+            <div className="h-6 bg-zinc-700 rounded w-3/4 mb-2"></div>
+            <div className="h-4 bg-zinc-700 rounded w-1/2"></div>
+          </div>
         ))}
       </div>
     )
   }
 
-  if (headlines.length === 0) {
+  if (error) {
     return (
-      <div 
-        role="status" 
-        className="text-center py-8 text-gray-400"
-        aria-label="No headlines available"
-      >
-        No headlines available
+      <div className="text-red-500 p-4 bg-red-900/50 rounded-lg">
+        <p className="font-semibold">Error loading headlines</p>
+        <p className="text-sm mt-1">{error}</p>
+      </div>
+    )
+  }
+
+  if (!headlines || headlines.length === 0) {
+    return (
+      <div className="text-gray-400 text-center py-8">
+        No headlines found
       </div>
     )
   }
 
   return (
-    <div 
-      role="list" 
-      aria-label={sectionTitle ? `${sectionTitle} headlines` : `${category} headlines`}
-      className="space-y-4"
-    >
-      {headlines.map((headline) => (
-        <HeadlineCard key={headline.id} headline={headline} />
-      ))}
+    <div className="space-y-4">
+      {sectionTitle && (
+        <h2 className="text-xl font-semibold text-gray-100 mb-4">
+          {sectionTitle}
+        </h2>
+      )}
+      <ul 
+        className="space-y-4"
+        aria-label={`List of ${status} headlines`}
+      >
+        {headlines.map((headline) => (
+          <li key={headline.id}>
+            {isAdmin ? (
+              <AdminHeadlineCard 
+                headline={headline}
+                onStatusChange={fetchHeadlines}
+              />
+            ) : (
+              <HeadlineCard article={headline} />
+            )}
+          </li>
+        ))}
+      </ul>
     </div>
   )
 } 

@@ -22,6 +22,10 @@ export type Headline = {
   approved_by: string | null
   category: string | null
   metadata: Record<string, any> | null
+  draft: boolean
+  published: boolean
+  moderation_status: 'pending' | 'approved' | 'rejected'
+  moderation_notes: string | null
 }
 
 export type UserProfile = {

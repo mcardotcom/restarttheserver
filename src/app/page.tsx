@@ -1,11 +1,21 @@
 'use client'
 
 import { createClient } from '@/lib/supabase/client'
-import HeadlineList from '@/components/HeadlineList'
+import { getArticles } from '@/lib/supabase/articles'
+import HeadlineCard from '@/components/HeadlineCard'
 import ErrorBoundary from '@/components/ErrorBoundary'
 
-export default function HomePage() {
+export default async function Home() {
   const supabase = createClient()
+  const articles = await getArticles()
+
+  // Split articles into three columns
+  const columnSize = Math.ceil(articles.length / 3)
+  const columns = [
+    articles.slice(0, columnSize),
+    articles.slice(columnSize, columnSize * 2),
+    articles.slice(columnSize * 2)
+  ]
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -21,79 +31,16 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        <ErrorBoundary>
-          <section 
-            className="mb-12"
-            aria-labelledby="breaking-news-heading"
-          >
-            <h2 
-              id="breaking-news-heading"
-              className="text-2xl font-bold mb-6 flex items-center gap-2"
-            >
-              <span className="text-red-500" aria-hidden="true">●</span>
-              Breaking News
-            </h2>
-            <HeadlineList 
-              supabase={supabase}
-              category="breaking"
-              sectionTitle="Breaking News"
-            />
-          </section>
-
-          <section 
-            className="mb-12"
-            aria-labelledby="high-priority-heading"
-          >
-            <h2 
-              id="high-priority-heading"
-              className="text-2xl font-bold mb-6 flex items-center gap-2"
-            >
-              <span className="text-yellow-500" aria-hidden="true">●</span>
-              High Priority
-            </h2>
-            <HeadlineList 
-              supabase={supabase}
-              category="high-priority"
-              sectionTitle="High Priority"
-            />
-          </section>
-
-          <section 
-            className="mb-12"
-            aria-labelledby="worth-reading-heading"
-          >
-            <h2 
-              id="worth-reading-heading"
-              className="text-2xl font-bold mb-6 flex items-center gap-2"
-            >
-              <span className="text-blue-500" aria-hidden="true">●</span>
-              Worth Reading
-            </h2>
-            <HeadlineList 
-              supabase={supabase}
-              category="worth-reading"
-              sectionTitle="Worth Reading"
-            />
-          </section>
-
-          <section 
-            aria-labelledby="also-happening-heading"
-          >
-            <h2 
-              id="also-happening-heading"
-              className="text-2xl font-bold mb-6 flex items-center gap-2"
-            >
-              <span className="text-green-500" aria-hidden="true">●</span>
-              Also Happening
-            </h2>
-            <HeadlineList 
-              supabase={supabase}
-              category="also-happening"
-              sectionTitle="Also Happening"
-            />
-          </section>
-        </ErrorBoundary>
+      <main className="min-h-screen bg-black">
+        <div className="container mx-auto px-4 py-6">
+          <div className="max-w-6xl mx-auto space-y-2">
+            {articles.map((article) => (
+              <ErrorBoundary key={article.id}>
+                <HeadlineCard article={article} />
+              </ErrorBoundary>
+            ))}
+          </div>
+        </div>
       </main>
 
       <footer className="border-t border-gray-800 mt-16">

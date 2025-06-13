@@ -17,7 +17,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.className} min-h-screen bg-gray-900 text-white antialiased`}>
+      <body className={`${inter.className} min-h-screen bg-gray-900 text-white antialiased`} suppressHydrationWarning={true}>
         <AuthRedirect />
         {children}
       </body>

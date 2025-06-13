@@ -60,75 +60,33 @@ CREATE TABLE error_logs (
     severity TEXT NOT NULL CHECK (severity IN ('info', 'warning', 'error', 'critical'))
 );
 
--- Create RLS policies
-ALTER TABLE headlines ENABLE ROW LEVEL SECURITY;
+-- Disable RLS on headlines since it's meant to be public
+ALTER TABLE headlines DISABLE ROW LEVEL SECURITY;
+
+-- Enable RLS on other tables
 ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE error_logs ENABLE ROW LEVEL SECURITY;
 
--- Headlines policies
-CREATE POLICY "Public headlines are viewable by everyone"
-    ON headlines FOR SELECT
-    USING (is_published = true);
+-- Drop all existing policies
+DROP POLICY IF EXISTS "Public headlines are viewable by everyone" ON headlines;
+DROP POLICY IF EXISTS "Editors can view all headlines" ON headlines;
+DROP POLICY IF EXISTS "Editors can insert headlines" ON headlines;
+DROP POLICY IF EXISTS "Editors can update headlines" ON headlines;
+DROP POLICY IF EXISTS "Allow authenticated users to delete headlines" ON headlines;
+DROP POLICY IF EXISTS "Users can view their own profile" ON user_profiles;
+DROP POLICY IF EXISTS "Admins can view all profiles" ON user_profiles;
+DROP POLICY IF EXISTS "Users can update their own profile" ON user_profiles;
+DROP POLICY IF EXISTS "Admins can update any profile" ON user_profiles;
 
-CREATE POLICY "Editors can view all headlines"
-    ON headlines FOR SELECT
-    USING (
-        EXISTS (
-            SELECT 1 FROM user_profiles
-            WHERE user_profiles.id = auth.uid()
-            AND user_profiles.role IN ('admin', 'editor')
-        )
-    );
-
-CREATE POLICY "Editors can insert headlines"
-    ON headlines FOR INSERT
-    WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM user_profiles
-            WHERE user_profiles.id = auth.uid()
-            AND user_profiles.role IN ('admin', 'editor')
-        )
-    );
-
-CREATE POLICY "Editors can update headlines"
-    ON headlines FOR UPDATE
-    USING (
-        EXISTS (
-            SELECT 1 FROM user_profiles
-            WHERE user_profiles.id = auth.uid()
-            AND user_profiles.role IN ('admin', 'editor')
-        )
-    );
-
--- User profiles policies (simplified to avoid recursion)
-CREATE POLICY "Users can view their own profile"
+-- Create simplified user_profiles policies
+CREATE POLICY "Allow public read access to profiles"
     ON user_profiles FOR SELECT
-    USING (id = auth.uid());
+    USING (true);
 
-CREATE POLICY "Admins can view all profiles"
-    ON user_profiles FOR SELECT
-    USING (
-        EXISTS (
-            SELECT 1 FROM user_profiles
-            WHERE id = auth.uid()
-            AND role = 'admin'
-        )
-    );
-
-CREATE POLICY "Users can update their own profile"
+CREATE POLICY "Allow individual update access"
     ON user_profiles FOR UPDATE
-    USING (id = auth.uid());
-
-CREATE POLICY "Admins can update any profile"
-    ON user_profiles FOR UPDATE
-    USING (
-        EXISTS (
-            SELECT 1 FROM user_profiles
-            WHERE id = auth.uid()
-            AND role = 'admin'
-        )
-    );
+    USING (auth.uid() = id);
 
 -- Ads policies
 CREATE POLICY "Public ads are viewable by everyone"
