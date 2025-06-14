@@ -62,7 +62,7 @@ interface RssItem {
 
 // Add these constants at the top with other constants
 const TEST_MODE = true; // Set to false in production
-const MAX_ARTICLES = 5; // Limit for testing
+const MAX_ARTICLES = 15; // Limit for testing
 
 // Keyword categories with weights for scoring
 const KEYWORD_CATEGORIES = {

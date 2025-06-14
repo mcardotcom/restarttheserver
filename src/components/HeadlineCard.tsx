@@ -24,62 +24,44 @@ export default function HeadlineCard({ article }: HeadlineCardProps) {
     category
   } = article
 
+  // Format the date only if it's valid
+  const formattedDate = published_at && published_at !== '' 
+    ? formatDistanceToNow(new Date(published_at), { addSuffix: true })
+    : '';
+
+  // Detect sponsored/ad
+  const isSponsored = source === 'Ad' || category === 'Promotion' || title?.toLowerCase().includes('sponsored');
+
   return (
-    <article 
-      className="bg-zinc-800 rounded-lg p-4 hover:bg-zinc-700 transition-colors"
+    <article
+      className={
+        'bg-zinc-900 rounded-lg p-4 shadow-lg flex flex-col border border-zinc-800 hover:shadow-red-500/30 hover:border-red-500/50 min-h-[340px] max-w-[370px] h-full transition-shadow duration-300'
+      }
       aria-labelledby={`headline-${title}`}
     >
-      <div className="flex items-center gap-6">
-        <div className="flex-1 min-w-0">
-          <h2 
-            id={`headline-${title}`}
-            className="text-lg font-semibold text-gray-100 truncate"
-          >
-            <a 
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-blue-400 transition-colors"
-            >
-              {title}
-            </a>
-          </h2>
-          <p className="text-gray-400 text-sm mt-2 line-clamp-2">{summary}</p>
+      <div className="flex-grow flex flex-col">
+        <div className="flex justify-between items-center mb-3">
+          <span className="text-sm font-bold text-red-500">{isSponsored ? '🚀 SPONSORED' : `🔥 ${flame_score}`}</span>
+          <span className="text-xs text-zinc-400">{isSponsored ? 'Partner' : source}</span>
         </div>
-
-        <div className="flex items-center gap-6 text-sm text-gray-400 whitespace-nowrap">
-          <span className="truncate max-w-[120px]">{source}</span>
-          <time dateTime={published_at}>
-            {formatDistanceToNow(new Date(published_at), { addSuffix: true })}
-          </time>
-          <div className="flex items-center gap-1">
-            <span className="font-medium">🔥</span>
-            <span className="text-orange-400">{flame_score}</span>
-          </div>
-          {is_breaking && (
-            <span 
-              className="px-2 py-1 text-xs font-semibold text-white bg-red-500 rounded"
-              aria-label="Breaking news"
-            >
-              Breaking
-            </span>
-          )}
-          {is_pinned && (
-            <span 
-              className="px-2 py-1 text-xs font-semibold text-white bg-blue-500 rounded"
-              aria-label="Pinned article"
-            >
-              Pinned
-            </span>
-          )}
-          {category && (
-            <span 
-              className="px-2 py-1 text-xs font-semibold text-white bg-purple-500 rounded"
-              aria-label={`Category: ${category}`}
-            >
-              {category}
-            </span>
-          )}
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-lg font-semibold text-zinc-100 hover:text-red-400 transition-colors"
+        >
+          {title}
+        </a>
+        <p className="text-sm text-zinc-400 mt-2">{summary}</p>
+      </div>
+      <div>
+        {isSponsored ? (
+          <div className="text-xs text-zinc-500 mt-4">Sponsored Link</div>
+        ) : (
+          formattedDate && <div className="text-xs text-zinc-500 mt-4">Published: {published_at}</div>
+        )}
+        <div className="mt-2 text-xs text-zinc-400 italic">
+          Category: {category || (isSponsored ? 'Promotion' : 'Other')}
         </div>
       </div>
     </article>

@@ -12,4 +12,7 @@ export const RSS_FEED_WHITELIST: RssFeed[] = [
   { sourceName: 'OpenAI Blog', url: 'https://openai.com/blog/rss.xml' },
   { sourceName: 'NVIDIA Blog', url: 'https://blogs.nvidia.com/feed/' },
   { sourceName: 'Y Combinator Blog', url: 'https://blog.ycombinator.com/feed/' },
+  { sourceName: 'Sam Altman Blog', url: 'http://blog.samaltman.com/posts.atom' },
+  { sourceName: 'Gary Marcus Substack', url: 'https://garymarcus.substack.com/feed' },
+  { sourceName: 'Import AI Substack', url: 'https://importai.substack.com/feed' }
 ]; 
