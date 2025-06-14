@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS sponsor_cards (
     title TEXT NOT NULL,
     description TEXT NOT NULL,
     link TEXT NOT NULL,
+    partner TEXT DEFAULT 'Ad' NOT NULL,
     image_url TEXT,
     active BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,

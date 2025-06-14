@@ -7,6 +7,8 @@ interface SponsorCard {
   title: string
   description: string
   link: string
+  partner: string
+  image_url?: string | null
   active: boolean
 }
 
@@ -15,6 +17,7 @@ export default function SponsorCardEditor() {
     title: '',
     description: '',
     link: '',
+    partner: '',
     active: true
   })
   const [sponsorCards, setSponsorCards] = useState<SponsorCard[]>([])
@@ -62,9 +65,20 @@ export default function SponsorCardEditor() {
         formattedLink = `https://${formattedLink}`
       }
 
+      // Ensure we have a partner value
+      const partner = sponsor.partner?.trim() || 'Ad'
+
+      const sponsorData = {
+        ...sponsor,
+        link: formattedLink,
+        partner
+      }
+
+      console.log('Submitting sponsor data:', sponsorData)
+
       const { error } = await supabase
         .from('sponsor_cards')
-        .upsert([{ ...sponsor, link: formattedLink }], {
+        .upsert([sponsorData], {
           onConflict: 'id'
         })
 
@@ -78,6 +92,7 @@ export default function SponsorCardEditor() {
         title: '',
         description: '',
         link: '',
+        partner: '',
         active: true
       })
       await fetchSponsorCards()
@@ -93,7 +108,15 @@ export default function SponsorCardEditor() {
   }
 
   const handleEdit = (card: SponsorCard) => {
-    setSponsor(card)
+    setSponsor({
+      id: card.id,
+      title: card.title,
+      description: card.description,
+      link: card.link,
+      partner: card.partner || 'Ad',
+      image_url: card.image_url,
+      active: card.active
+    })
   }
 
   const handleDelete = async (id: string) => {
@@ -169,6 +192,21 @@ export default function SponsorCardEditor() {
               value={sponsor.title}
               onChange={(e) => setSponsor({ ...sponsor, title: e.target.value })}
               className="w-full bg-zinc-800 text-white rounded px-3 py-2 border border-zinc-700 focus:border-red-500 focus:ring-1 focus:ring-red-500"
+              required
+            />
+          </div>
+
+          <div>
+            <label htmlFor="partner" className="block text-sm font-medium text-gray-300 mb-1">
+              Business Name
+            </label>
+            <input
+              type="text"
+              id="partner"
+              value={sponsor.partner}
+              onChange={(e) => setSponsor({ ...sponsor, partner: e.target.value })}
+              className="w-full bg-zinc-800 text-white rounded px-3 py-2 border border-zinc-700 focus:border-red-500 focus:ring-1 focus:ring-red-500"
+              placeholder="Enter business name"
               required
             />
           </div>

@@ -13,7 +13,7 @@ export default function SponsorCard({
   summary = 'Experience the future of AI with our top-rated Claude model — claim your free trial.',
   url = '#',
   category = 'Promotion',
-  partner = 'Partner',
+  partner,
 }: SponsorCardProps) {
   return (
     <article
@@ -23,7 +23,7 @@ export default function SponsorCard({
       <div className="flex-grow flex flex-col">
         <div className="flex justify-between items-center mb-3">
           <span className="text-sm text-red-500 font-bold">🚀 SPONSORED</span>
-          <span className="text-xs text-zinc-400">{partner}</span>
+          <span className="text-xs text-zinc-400">{partner || 'Ad'}</span>
         </div>
         <a
           href={url}

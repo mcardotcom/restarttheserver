@@ -54,11 +54,11 @@ export default async function Home() {
       if (i === sponsorPos && sponsorIdx < activeSponsorCards.length) {
         const sponsor = activeSponsorCards[sponsorIdx++];
         console.log('Adding sponsor card:', sponsor)
-        group.push({
+        const sponsorCard = {
           id: sponsor.id,
           title: sponsor.title,
           url: sponsor.link,
-          source: 'Ad',
+          source: sponsor.partner || 'Ad',
           summary: sponsor.description,
           flame_score: 0,
           published_at: sponsor.created_at,
@@ -75,7 +75,8 @@ export default async function Home() {
           published: true,
           moderation_status: 'approved',
           moderation_notes: ''
-        });
+        };
+        group.push(sponsorCard);
       } else if (headlineIdx < headlineArticles.length) {
         group.push(headlineArticles[headlineIdx++]);
       } else {
@@ -83,11 +84,11 @@ export default async function Home() {
         if (sponsorIdx < activeSponsorCards.length) {
           const sponsor = activeSponsorCards[sponsorIdx++];
           console.log('Adding extra sponsor card:', sponsor)
-          group.push({
+          const sponsorCard = {
             id: sponsor.id,
             title: sponsor.title,
             url: sponsor.link,
-            source: 'Ad',
+            source: sponsor.partner || 'Ad',
             summary: sponsor.description,
             flame_score: 0,
             published_at: sponsor.created_at,
@@ -104,7 +105,8 @@ export default async function Home() {
             published: true,
             moderation_status: 'approved',
             moderation_notes: ''
-          });
+          };
+          group.push(sponsorCard);
         } else {
           // If we run out of both headlines and sponsors, use a placeholder
           group.push({
@@ -145,11 +147,11 @@ export default async function Home() {
       } else if (sponsorIdx < activeSponsorCards.length) {
         const sponsor = activeSponsorCards[sponsorIdx++];
         console.log('Adding remaining sponsor card:', sponsor)
-        lastGroup.push({
+        const sponsorCard = {
           id: sponsor.id,
           title: sponsor.title,
           url: sponsor.link,
-          source: 'Ad',
+          source: sponsor.partner || 'Ad',
           summary: sponsor.description,
           flame_score: 0,
           published_at: sponsor.created_at,
@@ -166,7 +168,8 @@ export default async function Home() {
           published: true,
           moderation_status: 'approved',
           moderation_notes: ''
-        });
+        };
+        lastGroup.push(sponsorCard);
       } else {
         lastGroup.push({
           id: `ad-placeholder-extra-last-${i}`,
@@ -221,7 +224,7 @@ export default async function Home() {
                       summary={article.summary}
                       url={article.url}
                       category={article.category}
-                      partner="Partner"
+                      partner={article.is_sponsored ? article.source : 'Ad'}
                     />
                   ) : (
                     <HeadlineCard article={article} />

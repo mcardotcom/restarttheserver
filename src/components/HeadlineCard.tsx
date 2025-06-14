@@ -45,7 +45,7 @@ export default function HeadlineCard({ article }: HeadlineCardProps) {
       <div className="flex-grow flex flex-col">
         <div className="flex justify-between items-center mb-3">
           <span className="text-sm font-bold text-red-500">{isSponsored ? '🚀 SPONSORED' : `🔥 ${flame_score}`}</span>
-          <span className="text-xs text-zinc-400">{isSponsored ? 'Partner' : source}</span>
+          <span className="text-xs text-zinc-400">{source}</span>
         </div>
         <a
           href={url}
