@@ -258,7 +258,14 @@ export default function AdminPage() {
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex-1">
                         <h3 className="text-lg font-medium text-white mb-1">
-                          {article.title}
+                          <a 
+                            href={article.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:text-red-400 transition-colors"
+                          >
+                            {article.title}
+                          </a>
                         </h3>
                         <div className="flex items-center gap-4 text-sm text-zinc-400">
                           <span>{article.source}</span>

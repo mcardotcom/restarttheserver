@@ -35,12 +35,15 @@ export default function HeadlineCard({ article }: HeadlineCardProps) {
   // Detect sponsored/ad
   const isSponsored = source === 'Ad' || category === 'Promotion' || title?.toLowerCase().includes('sponsored');
 
+  // Create a unique ID for the title
+  const titleId = `headline-${title?.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+
   return (
     <article
       className={
         'bg-zinc-900 rounded-lg p-4 shadow-lg flex flex-col border border-zinc-800 hover:shadow-red-500/30 hover:border-red-500/50 min-h-[340px] max-w-[370px] h-full transition-shadow duration-300'
       }
-      aria-labelledby={`headline-${title}`}
+      aria-labelledby={titleId}
     >
       <div className="flex-grow flex flex-col">
         <div className="flex justify-between items-center mb-3">
@@ -48,6 +51,7 @@ export default function HeadlineCard({ article }: HeadlineCardProps) {
           <span className="text-xs text-zinc-400">{source}</span>
         </div>
         <a
+          id={titleId}
           href={url}
           target="_blank"
           rel="noopener noreferrer"
