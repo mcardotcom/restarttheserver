@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Headline } from '@/types'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import ManualArticleProcessor from '@/components/ManualArticleProcessor'
 
 export default function AdminPage() {
   const [articles, setArticles] = useState<Headline[]>([])
@@ -12,6 +13,43 @@ export default function AdminPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editForm, setEditForm] = useState<Partial<Headline>>({})
   const [supabase] = useState<SupabaseClient>(() => createClient())
+  const [fetching, setFetching] = useState(false)
+  const [publishedCount, setPublishedCount] = useState<number>(0)
+
+  const fetchPublishedCount = async () => {
+    try {
+      const { count, error } = await supabase
+        .from('headlines')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_published', true)
+
+      if (error) throw error
+      setPublishedCount(count || 0)
+    } catch (err) {
+      console.error('Error fetching published count:', err)
+    }
+  }
+
+  const handleHybridFetch = async () => {
+    try {
+      setFetching(true)
+      const response = await fetch('/api/test-hybrid-fetch')
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to fetch articles')
+      }
+      
+      // Refresh the articles list after successful fetch
+      await fetchArticles()
+      alert('Successfully fetched new articles')
+    } catch (err) {
+      console.error('Error fetching articles:', err)
+      alert(err instanceof Error ? err.message : 'Failed to fetch articles')
+    } finally {
+      setFetching(false)
+    }
+  }
 
   const fetchArticles = async () => {
     try {
@@ -51,6 +89,7 @@ export default function AdminPage() {
 
       if (error) throw error
       setArticles(articles.filter(article => article.id !== id))
+      fetchPublishedCount() // Update count after publishing
     } catch (err) {
       console.error('Error publishing article:', err)
       alert('Failed to publish article')
@@ -117,6 +156,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     fetchArticles()
+    fetchPublishedCount()
   }, [])
 
   if (loading) {
@@ -151,143 +191,161 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-black">
       <header className="bg-black border-b border-gray-800">
-        <div className="max-w-6xl mx-auto px-4 py-4">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">
             <span className="text-white">RESTART</span>
             <span className="text-red-500">_</span>
             <span className="text-gray-500 ml-2">Admin</span>
           </h1>
+          <div className="flex items-center space-x-4">
+            <div className="text-gray-300 text-lg font-medium">
+              Published: {publishedCount}
+            </div>
+            <button
+              onClick={handleHybridFetch}
+              disabled={fetching}
+              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors disabled:opacity-50"
+            >
+              {fetching ? 'Fetching...' : 'Fetch New Articles'}
+            </button>
+          </div>
         </div>
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-8">
-        {articles.length === 0 ? (
-          <div className="bg-zinc-900 rounded-lg p-8 text-center">
-            <p className="text-gray-400">No draft articles found</p>
-            <p className="text-gray-500 mt-2 text-sm">
-              Articles will appear here after they are fetched from RSS feeds
-            </p>
-          </div>
-        ) : (
-          <div className="bg-zinc-900 rounded-lg overflow-hidden shadow-lg">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-zinc-800 text-left">
-                  <th className="p-4 text-gray-400">Title</th>
-                  <th className="p-4 text-gray-400">Source</th>
-                  <th className="p-4 text-gray-400">Flame Score</th>
-                  <th className="p-4 text-gray-400">Category</th>
-                  <th className="p-4 text-gray-400">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-800">
-                {articles.map((article) => (
-                  <tr key={article.id} className="hover:bg-zinc-800/50">
-                    <td className="p-4">
-                      {editingId === article.id ? (
-                        <input
-                          type="text"
-                          value={editForm.title}
-                          onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-                          className="w-full bg-zinc-700 text-white rounded px-2 py-1"
-                        />
-                      ) : (
-                        <a 
-                          href={article.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-white hover:text-blue-400"
-                        >
-                          {article.title}
-                        </a>
-                      )}
-                    </td>
-                    <td className="p-4">
-                      {editingId === article.id ? (
-                        <input
-                          type="text"
-                          value={editForm.source}
-                          onChange={(e) => setEditForm({ ...editForm, source: e.target.value })}
-                          className="w-full bg-zinc-700 text-white rounded px-2 py-1"
-                        />
-                      ) : (
-                        <span className="text-gray-400">{article.source}</span>
-                      )}
-                    </td>
-                    <td className="p-4">
-                      {editingId === article.id ? (
-                        <input
-                          type="number"
-                          min="1"
-                          max="5"
-                          value={editForm.flame_score}
-                          onChange={(e) => setEditForm({ ...editForm, flame_score: parseInt(e.target.value) })}
-                          className="w-20 bg-zinc-700 text-white rounded px-2 py-1"
-                        />
-                      ) : (
-                        <span className="text-orange-400">🔥 {article.flame_score}</span>
-                      )}
-                    </td>
-                    <td className="p-4">
-                      {editingId === article.id ? (
-                        <input
-                          type="text"
-                          value={editForm.category}
-                          onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
-                          className="w-full bg-zinc-700 text-white rounded px-2 py-1"
-                        />
-                      ) : (
-                        <span className="text-gray-400">{article.category}</span>
-                      )}
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        {editingId === article.id ? (
-                          <>
-                            <button
-                              onClick={() => handleSave(article.id)}
-                              className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
-                            >
-                              Save
-                            </button>
-                            <button
-                              onClick={handleCancel}
-                              className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700"
-                            >
-                              Cancel
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <button
-                              onClick={() => handleEdit(article.id)}
-                              className="p-1 text-gray-400 hover:text-white"
-                              title="Edit"
-                            >
-                              ✏️
-                            </button>
-                            <button
-                              onClick={() => handlePublish(article.id)}
-                              className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
-                            >
-                              Publish
-                            </button>
-                            <button
-                              onClick={() => handleDecline(article.id)}
-                              className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
-                            >
-                              Decline
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </td>
+        <div className="mb-8">
+          <ManualArticleProcessor onSuccess={fetchArticles} />
+        </div>
+        
+        <div className="space-y-4">
+          {articles.length === 0 ? (
+            <div className="bg-zinc-900 rounded-lg p-8 text-center">
+              <p className="text-gray-400">No draft articles found</p>
+              <p className="text-gray-500 mt-2 text-sm">
+                Articles will appear here after they are fetched from RSS feeds
+              </p>
+            </div>
+          ) : (
+            <div className="bg-zinc-900 rounded-lg overflow-hidden shadow-lg">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-zinc-800 text-left">
+                    <th className="p-4 text-gray-400">Title</th>
+                    <th className="p-4 text-gray-400">Source</th>
+                    <th className="p-4 text-gray-400">Flame Score</th>
+                    <th className="p-4 text-gray-400">Category</th>
+                    <th className="p-4 text-gray-400">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                </thead>
+                <tbody className="divide-y divide-zinc-800">
+                  {articles.map((article) => (
+                    <tr key={article.id} className="hover:bg-zinc-800/50">
+                      <td className="p-4">
+                        {editingId === article.id ? (
+                          <input
+                            type="text"
+                            value={editForm.title}
+                            onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                            className="w-full bg-zinc-700 text-white rounded px-2 py-1"
+                          />
+                        ) : (
+                          <a 
+                            href={article.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-white hover:text-blue-400"
+                          >
+                            {article.title}
+                          </a>
+                        )}
+                      </td>
+                      <td className="p-4">
+                        {editingId === article.id ? (
+                          <input
+                            type="text"
+                            value={editForm.source}
+                            onChange={(e) => setEditForm({ ...editForm, source: e.target.value })}
+                            className="w-full bg-zinc-700 text-white rounded px-2 py-1"
+                          />
+                        ) : (
+                          <span className="text-gray-400">{article.source}</span>
+                        )}
+                      </td>
+                      <td className="p-4">
+                        {editingId === article.id ? (
+                          <input
+                            type="number"
+                            min="1"
+                            max="5"
+                            value={editForm.flame_score}
+                            onChange={(e) => setEditForm({ ...editForm, flame_score: parseInt(e.target.value) })}
+                            className="w-20 bg-zinc-700 text-white rounded px-2 py-1"
+                          />
+                        ) : (
+                          <span className="text-orange-400">🔥 {article.flame_score}</span>
+                        )}
+                      </td>
+                      <td className="p-4">
+                        {editingId === article.id ? (
+                          <input
+                            type="text"
+                            value={editForm.category}
+                            onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
+                            className="w-full bg-zinc-700 text-white rounded px-2 py-1"
+                          />
+                        ) : (
+                          <span className="text-gray-400">{article.category}</span>
+                        )}
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          {editingId === article.id ? (
+                            <>
+                              <button
+                                onClick={() => handleSave(article.id)}
+                                className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                              >
+                                Save
+                              </button>
+                              <button
+                                onClick={handleCancel}
+                                className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700"
+                              >
+                                Cancel
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => handleEdit(article.id)}
+                                className="p-1 text-gray-400 hover:text-white"
+                                title="Edit"
+                              >
+                                ✏️
+                              </button>
+                              <button
+                                onClick={() => handlePublish(article.id)}
+                                className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                              >
+                                Publish
+                              </button>
+                              <button
+                                onClick={() => handleDecline(article.id)}
+                                className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                              >
+                                Decline
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </main>
     </div>
   )

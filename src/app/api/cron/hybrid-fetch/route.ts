@@ -404,6 +404,7 @@ export async function POST(request: NextRequest) {
         source: article.source,
         summary: analysis.summary,
         flame_score: analysis.hype_score,
+        category: analysis.category,
         published_at: article.publishedAt,
         moderation_status: 'pending',
         is_published: false,
@@ -596,7 +597,7 @@ async function getUniqueArticles(articles: NormalizedArticle[]): Promise<Normali
   return uniqueArticles;
 }
 
-async function analyzeArticle(title: string, contentSnippet?: string) {
+export async function analyzeArticle(title: string, contentSnippet?: string) {
   try {
     const baseScore = calculateArticleScore(`${title} ${contentSnippet || ''}`);
     
