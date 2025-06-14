@@ -61,16 +61,12 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <header className="border-b border-gray-800 bg-black/90 backdrop-blur sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold tracking-tight">
-            <span className="text-white">RESTART</span>
-            <span className="text-red-500">_</span>
-          </h1>
-          <p className="text-gray-400 text-sm mt-1">
-            AI-curated tech news that matters
-          </p>
-        </div>
+      <header className="sticky top-0 z-10 bg-black/75 backdrop-blur mb-6 text-center">
+        <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-red-700 uppercase">RESTART_</span>
+          <span className="text-zinc-100">The Server</span>
+        </h1>
+        <p className="mt-4 text-lg text-zinc-400">Your daily digest of AI and tech news.</p>
       </header>
 
       <main className="min-h-screen bg-zinc-950">
