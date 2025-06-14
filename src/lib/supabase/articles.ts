@@ -14,7 +14,7 @@ export async function getArticles() {
     .select('*')
     .eq('published', true)
     .order('published_at', { ascending: false })
-    .limit(10)
+    .limit(60)
 
   if (error) {
     console.error('Error fetching articles:', error)

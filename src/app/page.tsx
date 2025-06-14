@@ -11,56 +11,193 @@ export default async function Home() {
   const supabase = createClient()
   const articles = await getArticles()
 
-  // Prepare headline and sponsor (ad) cards
-  const headlineArticles = articles.slice(0, 60 - 6); // 54 headlines if enough
-  const sponsorPlaceholders = Array.from({ length: 6 }).map((_, i) => ({
-    id: `ad-placeholder-${i}`,
-    title: 'Ad Placeholder',
-    url: '#',
-    source: 'Ad',
-    summary: 'Your ad could be here! Contact us to sponsor this spot.',
-    flame_score: 0,
-    published_at: '',
-    created_at: '',
-    updated_at: '',
-    is_published: true,
-    is_pinned: false,
-    is_breaking: false,
-    is_sponsored: false,
-    approved_by: '',
-    category: 'Ad',
-    metadata: {},
-    draft: false,
-    published: true,
-    moderation_status: 'approved',
-    moderation_notes: ''
-  }));
+  // Fetch active sponsor cards
+  const { data: sponsorCards, error: sponsorError } = await supabase
+    .from('sponsor_cards')
+    .select('*')
+    .eq('active', true)
+    .order('created_at', { ascending: false })
 
-  // Build 6 groups of 10, each with 1 sponsor at a random position
+  console.log('Fetched sponsor cards:', sponsorCards)
+  console.log('Sponsor cards error:', sponsorError)
+
+  if (sponsorError) {
+    console.error('Error fetching sponsor cards:', sponsorError)
+  }
+
+  // Calculate how many sponsor cards we need
+  const totalCards = 60
+  const numSponsorCards = 6
+  const numHeadlineCards = totalCards - numSponsorCards
+
+  // Prepare headline and sponsor cards
+  const headlineArticles = articles.slice(0, numHeadlineCards)
+  const activeSponsorCards = sponsorCards || []
+
+  console.log('Active sponsor cards:', activeSponsorCards)
+  console.log('Number of active sponsor cards:', activeSponsorCards.length)
+
+  // Build groups of 10 cards, each with 1 sponsor at a random position
   const articleGroups = [];
   let headlineIdx = 0;
-  for (let groupIdx = 0; groupIdx < 6; groupIdx++) {
+  let sponsorIdx = 0;
+
+  // Calculate how many complete groups of 10 we can make
+  const numCompleteGroups = Math.floor(totalCards / 10);
+  
+  for (let groupIdx = 0; groupIdx < numCompleteGroups; groupIdx++) {
     // Pick a random position for the sponsor card in this group
     const sponsorPos = Math.floor(Math.random() * 10);
     const group = [];
+    
     for (let i = 0; i < 10; i++) {
-      if (i === sponsorPos) {
-        group.push(sponsorPlaceholders[groupIdx]);
+      if (i === sponsorPos && sponsorIdx < activeSponsorCards.length) {
+        const sponsor = activeSponsorCards[sponsorIdx++];
+        console.log('Adding sponsor card:', sponsor)
+        group.push({
+          id: sponsor.id,
+          title: sponsor.title,
+          url: sponsor.link,
+          source: 'Ad',
+          summary: sponsor.description,
+          flame_score: 0,
+          published_at: sponsor.created_at,
+          created_at: sponsor.created_at,
+          updated_at: sponsor.updated_at,
+          is_published: true,
+          is_pinned: false,
+          is_breaking: false,
+          is_sponsored: true,
+          approved_by: '',
+          category: 'Promotion',
+          metadata: {},
+          draft: false,
+          published: true,
+          moderation_status: 'approved',
+          moderation_notes: ''
+        });
+      } else if (headlineIdx < headlineArticles.length) {
+        group.push(headlineArticles[headlineIdx++]);
       } else {
-        // If we run out of headlines, fill with more sponsor cards
-        if (headlineIdx < headlineArticles.length) {
-          group.push(headlineArticles[headlineIdx++]);
+        // If we run out of headlines, use a sponsor card
+        if (sponsorIdx < activeSponsorCards.length) {
+          const sponsor = activeSponsorCards[sponsorIdx++];
+          console.log('Adding extra sponsor card:', sponsor)
+          group.push({
+            id: sponsor.id,
+            title: sponsor.title,
+            url: sponsor.link,
+            source: 'Ad',
+            summary: sponsor.description,
+            flame_score: 0,
+            published_at: sponsor.created_at,
+            created_at: sponsor.created_at,
+            updated_at: sponsor.updated_at,
+            is_published: true,
+            is_pinned: false,
+            is_breaking: false,
+            is_sponsored: true,
+            approved_by: '',
+            category: 'Promotion',
+            metadata: {},
+            draft: false,
+            published: true,
+            moderation_status: 'approved',
+            moderation_notes: ''
+          });
         } else {
-          // Use extra sponsor placeholders if not enough headlines
-          group.push({ ...sponsorPlaceholders[0], id: `ad-placeholder-extra-${groupIdx}-${i}` });
+          // If we run out of both headlines and sponsors, use a placeholder
+          group.push({
+            id: `ad-placeholder-extra-${groupIdx}-${i}`,
+            title: 'Ad Placeholder',
+            url: '#',
+            source: 'Ad',
+            summary: 'Your ad could be here! Contact us to sponsor this spot.',
+            flame_score: 0,
+            published_at: '',
+            created_at: '',
+            updated_at: '',
+            is_published: true,
+            is_pinned: false,
+            is_breaking: false,
+            is_sponsored: true,
+            approved_by: '',
+            category: 'Promotion',
+            metadata: {},
+            draft: false,
+            published: true,
+            moderation_status: 'approved',
+            moderation_notes: ''
+          });
         }
       }
     }
     articleGroups.push(group);
   }
 
-  // Flatten all groups into a single array of 60 cards
+  // Handle any remaining cards (less than 10)
+  const remainingCards = totalCards % 10;
+  if (remainingCards > 0) {
+    const lastGroup = [];
+    for (let i = 0; i < remainingCards; i++) {
+      if (headlineIdx < headlineArticles.length) {
+        lastGroup.push(headlineArticles[headlineIdx++]);
+      } else if (sponsorIdx < activeSponsorCards.length) {
+        const sponsor = activeSponsorCards[sponsorIdx++];
+        console.log('Adding remaining sponsor card:', sponsor)
+        lastGroup.push({
+          id: sponsor.id,
+          title: sponsor.title,
+          url: sponsor.link,
+          source: 'Ad',
+          summary: sponsor.description,
+          flame_score: 0,
+          published_at: sponsor.created_at,
+          created_at: sponsor.created_at,
+          updated_at: sponsor.updated_at,
+          is_published: true,
+          is_pinned: false,
+          is_breaking: false,
+          is_sponsored: true,
+          approved_by: '',
+          category: 'Promotion',
+          metadata: {},
+          draft: false,
+          published: true,
+          moderation_status: 'approved',
+          moderation_notes: ''
+        });
+      } else {
+        lastGroup.push({
+          id: `ad-placeholder-extra-last-${i}`,
+          title: 'Ad Placeholder',
+          url: '#',
+          source: 'Ad',
+          summary: 'Your ad could be here! Contact us to sponsor this spot.',
+          flame_score: 0,
+          published_at: '',
+          created_at: '',
+          updated_at: '',
+          is_published: true,
+          is_pinned: false,
+          is_breaking: false,
+          is_sponsored: true,
+          approved_by: '',
+          category: 'Promotion',
+          metadata: {},
+          draft: false,
+          published: true,
+          moderation_status: 'approved',
+          moderation_notes: ''
+        });
+      }
+    }
+    articleGroups.push(lastGroup);
+  }
+
+  // Flatten all groups into a single array
   const allCards = articleGroups.flat();
+  console.log('Final cards array:', allCards.filter(card => card.source === 'Ad'))
 
   return (
     <div className="min-h-screen bg-black text-white">
