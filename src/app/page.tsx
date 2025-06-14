@@ -59,65 +59,39 @@ export default async function Home() {
     articleGroups.push(group);
   }
 
+  // Flatten all groups into a single array of 60 cards
+  const allCards = articleGroups.flat();
+
   return (
     <div className="min-h-screen bg-black text-white">
-      <header className="sticky top-0 z-10 bg-black/75 backdrop-blur mb-6 text-center">
-        <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight">
+      <header className="sticky top-0 z-10 bg-black/75 backdrop-blur h-32 flex items-center justify-center flex-col h-full w-full gap-y-1 text-center">
+        <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight m-0">
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-red-700 uppercase">RESTART_</span>
           <span className="text-zinc-100">The Server</span>
         </h1>
-        <p className="mt-4 text-lg text-zinc-400">Your daily digest of AI and tech news.</p>
+        <p className="text-lg text-zinc-400 m-0">Your daily digest of AI and tech news.</p>
       </header>
 
       <main className="min-h-screen bg-zinc-950">
         <div className="container mx-auto px-4 py-8">
-          <div className="max-w-7xl mx-auto space-y-14">
-            {articleGroups.map((group, groupIndex) => (
-              <div key={groupIndex} className="space-y-8">
-                {/* First row of 5 cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 grid-rows-auto-fr">
-                  {group.slice(0, 5).map((article) => (
-                    <ErrorBoundary key={article.id}>
-                      {article.source === 'Ad' || article.id?.toString().includes('ad-placeholder') ? (
-                        <SponsorCard
-                          title={article.title}
-                          summary={article.summary}
-                          url={article.url}
-                          category={article.category}
-                          partner="Partner"
-                        />
-                      ) : (
-                        <HeadlineCard article={article} />
-                      )}
-                    </ErrorBoundary>
-                  ))}
-                </div>
-                {/* Second row of 5 cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 grid-rows-auto-fr">
-                  {group.slice(5, 10).map((article) => (
-                    <ErrorBoundary key={article.id}>
-                      {article.source === 'Ad' || article.id?.toString().includes('ad-placeholder') ? (
-                        <SponsorCard
-                          title={article.title}
-                          summary={article.summary}
-                          url={article.url}
-                          category={article.category}
-                          partner="Partner"
-                        />
-                      ) : (
-                        <HeadlineCard article={article} />
-                      )}
-                    </ErrorBoundary>
-                  ))}
-                </div>
-                {/* Ad block after each group of 10 */}
-                <div className="md:col-span-3 lg:col-span-4 xl:col-span-5 sm:col-span-2 col-span-1">
-                  <div className="bg-zinc-800 text-center py-10 rounded-lg shadow-inner border border-zinc-700 text-zinc-400">
-                    <p className="text-lg">Ad Banner Placement – 970x250</p>
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 grid-rows-auto-fr">
+              {allCards.map((article) => (
+                <ErrorBoundary key={article.id}>
+                  {article.source === 'Ad' || article.id?.toString().includes('ad-placeholder') ? (
+                    <SponsorCard
+                      title={article.title}
+                      summary={article.summary}
+                      url={article.url}
+                      category={article.category}
+                      partner="Partner"
+                    />
+                  ) : (
+                    <HeadlineCard article={article} />
+                  )}
+                </ErrorBoundary>
+              ))}
+            </div>
           </div>
         </div>
       </main>

@@ -29,6 +29,9 @@ export default function HeadlineCard({ article }: HeadlineCardProps) {
     ? formatDistanceToNow(new Date(published_at), { addSuffix: true })
     : '';
 
+  // Format the date to YYYY-MM-DD only
+  const dateOnly = published_at ? published_at.slice(0, 10) : '';
+
   // Detect sponsored/ad
   const isSponsored = source === 'Ad' || category === 'Promotion' || title?.toLowerCase().includes('sponsored');
 
@@ -56,11 +59,11 @@ export default function HeadlineCard({ article }: HeadlineCardProps) {
       </div>
       <div>
         {isSponsored ? (
-          <div className="text-xs text-zinc-500 mt-4">Sponsored Link</div>
+          <div className="text-xs text-zinc-500 mt-2">Sponsored Link</div>
         ) : (
-          formattedDate && <div className="text-xs text-zinc-500 mt-4">Published: {published_at}</div>
+          dateOnly && <div className="text-xs text-zinc-500 mt-2">{dateOnly}</div>
         )}
-        <div className="mt-2 text-xs text-zinc-400 italic">
+        <div className="mt-1 text-xs text-zinc-400 italic">
           Category: {category || (isSponsored ? 'Promotion' : 'Other')}
         </div>
       </div>
