@@ -1,6 +1,10 @@
 import { useState } from 'react';
 
-export default function ManualYouTubeProcessor() {
+interface ManualYouTubeProcessorProps {
+  onSuccess?: () => void;
+}
+
+export default function ManualYouTubeProcessor({ onSuccess }: ManualYouTubeProcessorProps) {
   const [videoUrl, setVideoUrl] = useState('');
   const [title, setTitle] = useState('');
   const [transcript, setTranscript] = useState('');
@@ -35,6 +39,11 @@ export default function ManualYouTubeProcessor() {
       setVideoUrl('');
       setTitle('');
       setTranscript('');
+      
+      // Call the onSuccess callback to trigger a refresh
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error) {
       setMessage({ type: 'error', text: error instanceof Error ? error.message : 'Failed to process video' });
     } finally {

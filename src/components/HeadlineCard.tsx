@@ -38,10 +38,19 @@ export default function HeadlineCard({ article }: HeadlineCardProps) {
   // Create a unique ID for the title
   const titleId = `headline-${title?.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
 
+  // Truncate summary to 30 words
+  const truncateSummary = (text: string) => {
+    const words = text.split(' ');
+    if (words.length > 30) {
+      return words.slice(0, 30).join(' ') + '...';
+    }
+    return text;
+  };
+
   return (
     <article
       className={
-        'bg-zinc-900 rounded-lg p-4 shadow-lg flex flex-col border border-zinc-800 hover:shadow-red-500/30 hover:border-red-500/50 min-h-[340px] max-w-[370px] h-full transition-shadow duration-300'
+        'bg-zinc-900 rounded-lg p-4 shadow-lg flex flex-col border border-zinc-800 hover:shadow-red-500/30 hover:border-red-500/50 h-[360px] max-w-[370px] transition-shadow duration-300'
       }
       aria-labelledby={titleId}
     >
@@ -55,13 +64,13 @@ export default function HeadlineCard({ article }: HeadlineCardProps) {
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-lg font-semibold text-zinc-100 hover:text-red-400 transition-colors"
+          className="text-lg font-semibold text-zinc-100 hover:text-red-400 transition-colors line-clamp-3"
         >
           {title}
         </a>
-        <p className="text-sm text-zinc-400 mt-2">{summary}</p>
+        <p className="text-sm text-zinc-400 mt-2">{summary ? truncateSummary(summary) : ''}</p>
       </div>
-      <div>
+      <div className="mt-auto">
         {isSponsored ? (
           <div className="text-xs text-zinc-500 mt-2">Sponsored Link</div>
         ) : (

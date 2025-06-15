@@ -224,7 +224,7 @@ export default function AdminPage() {
 
             <div className="mb-8">
               <h2 className="text-2xl font-bold mb-4">Process YouTube Video</h2>
-              <ManualYouTubeProcessor />
+              <ManualYouTubeProcessor onSuccess={fetchArticles} />
             </div>
           </div>
 
