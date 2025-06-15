@@ -9,6 +9,7 @@ import SponsorCardEditor from '@/components/SponsorCardEditor'
 import { RefreshCw, Edit, Check, X } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { Flame } from 'lucide-react'
+import ManualYouTubeProcessor from '@/components/ManualYouTubeProcessor'
 
 export default function AdminPage() {
   const [articles, setArticles] = useState<Headline[]>([])
@@ -219,6 +220,11 @@ export default function AdminPage() {
 
             <div>
               <SponsorCardEditor />
+            </div>
+
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold mb-4">Process YouTube Video</h2>
+              <ManualYouTubeProcessor />
             </div>
           </div>
 
