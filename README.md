@@ -1,142 +1,154 @@
-RESTART_ The Server
+# Restart The Server
 
-AI-First News Aggregator for Builders and Technologists
+A modern news aggregation and management platform built with Next.js, TypeScript, and Supabase.
 
-"Signal, not sludge." A modern Drudge-style feed tailored for the AI industry and those building the future.
+## Features
 
-📌 Overview
+- News headline aggregation and management
+- Admin panel for content moderation
+- Authentication and authorization
+- Real-time updates
+- Responsive design
+- Comprehensive testing infrastructure
 
-RESTART_ The Server is a minimalist, lightning-fast news aggregation site focused exclusively on the most important developments in AI. Inspired by the stark utility of the Drudge Report, this project combines human editorial curation with AI-powered enhancements like summarization, hype scoring, and smart tagging.
+## Tech Stack
 
-🚀 Core Features
+- **Frontend**: Next.js 14, React 18, TypeScript
+- **Styling**: Tailwind CSS
+- **Backend**: Next.js API Routes
+- **Database**: Supabase
+- **Authentication**: Supabase Auth
+- **Testing**: Jest, Playwright, React Testing Library
 
-📰 Headline-First Feed – Clean, single-page layout optimized for speed and clarity
+## Testing Infrastructure
 
-🔥 Flame Score System – Classifies stories 1-5 based on importance ("1-flame = fluff, 5-flame = seismic")
+The project includes a comprehensive testing setup:
 
-🤖 AI Summarization – One-sentence, GPT-generated summaries for quick reads
+### Unit Tests
 
-🧠 Admin Dashboard – Bookmarklet-based editorial pipeline with full CRUD
+- Jest for unit testing
+- React Testing Library for component testing
+- Mock implementations for external services
 
-💡 Story Types – "Normal", "Breaking", and "Developing" to track evolving events
+Run unit tests:
+```bash
+npm test
+```
 
-🌗 Dark Mode – Automatic theme toggle
+Run tests in watch mode:
+```bash
+npm run test:watch
+```
 
-📱 Mobile-First Design – Built to look great and load fast on any device
+Generate coverage report:
+```bash
+npm run test:coverage
+```
 
-📊 Basic Analytics – Click tracking and dead link detection
+### Integration Tests
 
-🧼 Non-Intrusive Ads – Footer-only Google AdSense for monetization
+- API route testing with Jest
+- Mock HTTP requests with node-mocks-http
+- Database integration tests
 
-📅 7-Day MVP Build Plan
+### E2E Tests
 
-Day
+- Playwright for end-to-end testing
+- Cross-browser testing support
+- Visual regression testing
 
-Focus
+Run E2E tests:
+```bash
+npm run test:e2e
+```
 
-1
+Run E2E tests with UI:
+```bash
+npm run test:e2e:ui
+```
 
-Initialize repo, install Next.js + Tailwind CSS + Supabase
+Debug E2E tests:
+```bash
+npm run test:e2e:debug
+```
 
-2
+### CI/CD Integration
 
-Build headline data model, set up Supabase tables
+Run all tests in CI environment:
+```bash
+npm run test:ci
+```
 
-3
+## TypeScript Support
 
-Create Drudge-style frontend layout (mobile + dark mode)
+The project uses TypeScript for type safety and better developer experience:
 
-4
+- Strict type checking enabled
+- Comprehensive type definitions
+- Interface definitions for all components and API responses
+- Type-safe API calls
 
-Admin interface + bookmarklet to add/edit headlines
+## Logging and Error Tracking
 
-5
+- Custom logging utility with different log levels
+- Error tracking integration ready
+- Development and production logging strategies
+- Error boundary implementation
 
-Integrate OpenAI API for summaries + flame scoring
+## Caching Strategy
 
-6
+- In-memory caching for frequently accessed data
+- TTL-based cache invalidation
+- Cache size management
+- Memoization utility for expensive computations
 
-Add non-intrusive footer ads (AdSense), dead link checker
+## Performance Optimizations
 
-7
+- Component optimization
+- Proper caching strategies
+- Error boundaries
+- Lazy loading
+- Image optimization
 
-Polish, test, deploy to Vercel, soft launch to builders
+## Getting Started
 
-🧱 Tech Stack
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Set up environment variables:
+   ```bash
+   cp .env.example .env.local
+   ```
+4. Start the development server:
+   ```bash
+   npm run dev
+   ```
 
-Frontend: Next.js 14 + Tailwind CSS
+## Development
 
-Backend: Supabase (DB + Auth)
+- Run linter:
+  ```bash
+  npm run lint
+  ```
+- Run tests:
+  ```bash
+  npm test
+  ```
+- Build for production:
+  ```bash
+  npm run build
+  ```
 
-AI: OpenAI API (GPT-4 for summary + classification)
+## Contributing
 
-Deployment: Vercel
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
-Dev Tools: Cursor.com IDE, GitHub Actions, Prettier, ESLint
+## License
 
-🧠 AI Prompt Design
-
-System: You are a neutral AI news classifier for tech industry professionals. Rate stories 1-5 flames based on industry impact, write 1-sentence summaries, and categorize them accurately.
-
-User: Title: "Anthropic Releases Claude 3.5 with Major Performance Gains"
-Source: Anthropic Blog
-Date: 2025-06-13
-
-Response format:
-Summary: [one sentence]
-Category: [Model Releases|Funding|Regulation|Research|Drama|Other]
-Flames: [1-5]
-
-📁 Folder Structure (Planned)
-
-📦 restart-the-server
-├── public/
-├── pages/
-│   ├── index.tsx (feed)
-│   └── admin.tsx (dashboard)
-├── components/
-│   └── HeadlineCard.tsx
-├── lib/
-│   └── summarize.ts (OpenAI)
-├── supabase/
-│   └── schema.sql
-├── docs/
-│   ├── PRD.md
-│   └── tech.md
-└── README.md
-
-💵 Monetization Strategy
-
-Google AdSense only in the footer (1 slot per page)
-
-Clean layout with no popups, interstitials, or banner clutter
-
-Long-term: programmable alerts, premium access to archives, or API access to headline feed
-
-📈 Roadmap
-
-✅ MVP Launch (7 days)
-
-🔄 Improve flame scoring with ML feedback loop
-
-🔔 User-specific programmable alerts
-
-📨 Weekly email digest (click to subscribe)
-
-👥 Multi-curator support w/ invite-based access
-
-📬 Contact / Contribute
-
-Want to help curate, contribute to code, or sponsor the project?
-
-📧 Email: hello@restarttheserver.com🌐 Website: restarttheserver.com (coming soon)
-
-🧠 Philosophy
-
-"This is exactly like Drudge, but somehow better."
-
-We don't believe in reinventing news. We believe in filtering noise so builders can stay focused. If it's not 🔥, it’s not on the Server.
-
-🔒 License
-
-MIT
+This project is licensed under the MIT License - see the LICENSE file for details.

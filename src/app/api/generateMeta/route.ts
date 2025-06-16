@@ -2,21 +2,23 @@ import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { withRateLimit } from '@/lib/rate-limit'
 import { handleError, ErrorType } from '@/lib/error-handling'
+import { validateRequest } from '@/lib/validation'
+import { z } from 'zod'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
+// Validation schema for meta generation
+const metaGenerationSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  url: z.string().url('Please enter a valid URL')
+});
+
 export const POST = withRateLimit(async (request: NextRequest) => {
   try {
-    const { title, url } = await request.json()
-
-    if (!title || !url) {
-      return NextResponse.json(
-        { error: 'Title and URL are required' },
-        { status: 400 }
-      )
-    }
+    // Validate request body
+    const { title, url } = await validateRequest(metaGenerationSchema, request);
 
     const prompt = `Analyze this news headline and URL for a tech news aggregator:
 

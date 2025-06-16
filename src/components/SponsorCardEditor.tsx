@@ -1,6 +1,9 @@
+'use client';
+
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Edit, Trash2, ToggleLeft, ToggleRight } from 'lucide-react'
+import { SponsorCardEditorProps } from '@/types'
 
 interface SponsorCard {
   id?: string
@@ -12,14 +15,18 @@ interface SponsorCard {
   active: boolean
 }
 
-export default function SponsorCardEditor() {
-  const [sponsor, setSponsor] = useState<SponsorCard>({
-    title: '',
-    description: '',
-    link: '',
-    partner: '',
-    active: true
-  })
+export default function SponsorCardEditor({
+  initialData,
+  onSave,
+  onCancel,
+}: SponsorCardEditorProps) {
+  const [formData, setFormData] = useState({
+    title: initialData?.title || '',
+    summary: initialData?.summary || '',
+    url: initialData?.url || '',
+    category: initialData?.category || '',
+    partner: initialData?.partner || '',
+  });
   const [sponsorCards, setSponsorCards] = useState<SponsorCard[]>([])
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
@@ -49,13 +56,13 @@ export default function SponsorCardEditor() {
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setMessage(null)
+    e.preventDefault();
+    setLoading(true);
+    setMessage(null);
 
     try {
       // Format the link URL
-      let formattedLink = sponsor.link.trim()
+      let formattedLink = formData.url.trim()
       
       // Remove any protocol if present
       formattedLink = formattedLink.replace(/^(https?:\/\/)?(www\.)?/, '')
@@ -66,36 +73,17 @@ export default function SponsorCardEditor() {
       }
 
       // Ensure we have a partner value
-      const partner = sponsor.partner?.trim() || 'Ad'
+      const partner = formData.partner?.trim() || 'Ad'
 
       const sponsorData = {
-        ...sponsor,
+        ...formData,
         link: formattedLink,
         partner
       }
 
       console.log('Submitting sponsor data:', sponsorData)
 
-      const { error } = await supabase
-        .from('sponsor_cards')
-        .upsert([sponsorData], {
-          onConflict: 'id'
-        })
-
-      if (error) {
-        console.error('Error updating sponsor card:', error)
-        throw error
-      }
-
-      setMessage({ type: 'success', text: 'Sponsor card updated successfully' })
-      setSponsor({
-        title: '',
-        description: '',
-        link: '',
-        partner: '',
-        active: true
-      })
-      await fetchSponsorCards()
+      await onSave(sponsorData)
     } catch (err) {
       console.error('Error in handleSubmit:', err)
       setMessage({ 
@@ -108,14 +96,12 @@ export default function SponsorCardEditor() {
   }
 
   const handleEdit = (card: SponsorCard) => {
-    setSponsor({
-      id: card.id,
+    setFormData({
       title: card.title,
-      description: card.description,
-      link: card.link,
+      summary: card.description,
+      url: card.link,
+      category: '',
       partner: card.partner || 'Ad',
-      image_url: card.image_url,
-      active: card.active
     })
   }
 
@@ -189,8 +175,8 @@ export default function SponsorCardEditor() {
             <input
               type="text"
               id="title"
-              value={sponsor.title}
-              onChange={(e) => setSponsor({ ...sponsor, title: e.target.value })}
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               className="w-full bg-zinc-800 text-white rounded px-3 py-2 border border-zinc-700 focus:border-red-500 focus:ring-1 focus:ring-red-500"
               required
             />
@@ -203,8 +189,8 @@ export default function SponsorCardEditor() {
             <input
               type="text"
               id="partner"
-              value={sponsor.partner}
-              onChange={(e) => setSponsor({ ...sponsor, partner: e.target.value })}
+              value={formData.partner}
+              onChange={(e) => setFormData({ ...formData, partner: e.target.value })}
               className="w-full bg-zinc-800 text-white rounded px-3 py-2 border border-zinc-700 focus:border-red-500 focus:ring-1 focus:ring-red-500"
               placeholder="Enter business name"
               required
@@ -212,13 +198,13 @@ export default function SponsorCardEditor() {
           </div>
 
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-1">
+            <label htmlFor="summary" className="block text-sm font-medium text-gray-300 mb-1">
               Description
             </label>
             <textarea
-              id="description"
-              value={sponsor.description}
-              onChange={(e) => setSponsor({ ...sponsor, description: e.target.value })}
+              id="summary"
+              value={formData.summary}
+              onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
               className="w-full bg-zinc-800 text-white rounded px-3 py-2 border border-zinc-700 focus:border-red-500 focus:ring-1 focus:ring-red-500"
               rows={3}
               required
@@ -226,14 +212,14 @@ export default function SponsorCardEditor() {
           </div>
 
           <div>
-            <label htmlFor="link" className="block text-sm font-medium text-gray-300 mb-1">
+            <label htmlFor="url" className="block text-sm font-medium text-gray-300 mb-1">
               Link URL
             </label>
             <input
               type="text"
-              id="link"
-              value={sponsor.link}
-              onChange={(e) => setSponsor({ ...sponsor, link: e.target.value })}
+              id="url"
+              value={formData.url}
+              onChange={(e) => setFormData({ ...formData, url: e.target.value })}
               className="w-full bg-zinc-800 text-white rounded px-3 py-2 border border-zinc-700 focus:border-red-500 focus:ring-1 focus:ring-red-500"
               placeholder="example.com"
               required
@@ -248,13 +234,22 @@ export default function SponsorCardEditor() {
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-red-600 text-white rounded px-4 py-2 hover:bg-red-700 transition-colors disabled:opacity-50"
-          >
-            {loading ? 'Updating...' : sponsor.id ? 'Update Sponsor Card' : 'Create Sponsor Card'}
-          </button>
+          <div className="flex justify-end space-x-4">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-4 py-2 text-gray-300 hover:text-white transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-zinc-900"
+            >
+              {loading ? 'Updating...' : initialData ? 'Save Changes' : 'Create Card'}
+            </button>
+          </div>
         </form>
       </div>
 

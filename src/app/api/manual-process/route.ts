@@ -4,28 +4,16 @@ import { analyzeArticle } from '@/app/api/cron/hybrid-fetch/route';
 import { normalizeUrl } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/server';
 import { withRateLimit } from '@/lib/rate-limit';
+import { validateRequest } from '@/lib/validation';
+import { urlSchema } from '@/lib/validation';
+import { handleError, ErrorType } from '@/lib/error-handling';
+import { z } from 'zod';
 
 // Wrap the handler with rate limiting
 export const POST = withRateLimit(async (request: NextRequest) => {
   try {
-    const { url } = await request.json();
-
-    if (!url) {
-      return NextResponse.json(
-        { error: 'URL is required' },
-        { status: 400 }
-      );
-    }
-
-    // Validate URL format
-    try {
-      new URL(url);
-    } catch (e) {
-      return NextResponse.json(
-        { error: 'Invalid URL format' },
-        { status: 400 }
-      );
-    }
+    // Validate request body
+    const { url } = await validateRequest(z.object({ url: urlSchema }), request);
 
     // Check if article already exists
     const normalizedUrl = normalizeUrl(url);
@@ -63,47 +51,26 @@ export const POST = withRateLimit(async (request: NextRequest) => {
 
     // Analyze article
     const analysis = await analyzeArticle(title, contentSnippet);
-    if (!analysis) {
-      return NextResponse.json(
-        { error: 'Failed to analyze article' },
-        { status: 500 }
-      );
-    }
 
     // Insert into database
-    const { data, error } = await supabase.from('headlines').insert({
-      title,
-      url: normalizedUrl,
-      source: new URL(url).hostname,
-      summary: analysis.summary,
-      flame_score: analysis.hype_score,
-      category: analysis.category,
-      published_at: new Date().toISOString(),
-      moderation_status: 'pending',
-      is_published: false,
-      draft: true,
-      published: false,
-      ai_summary: true,
-    }).select().single();
+    const { data, error } = await supabase
+      .from('headlines')
+      .insert([{
+        title,
+        url: normalizedUrl,
+        source: new URL(url).hostname,
+        summary: contentSnippet,
+        ...analysis
+      }])
+      .select()
+      .single();
 
     if (error) {
-      console.error('Database error:', error);
-      return NextResponse.json(
-        { error: 'Failed to save article to database' },
-        { status: 500 }
-      );
+      throw error;
     }
 
-    return NextResponse.json({
-      message: 'Article processed successfully',
-      article: data
-    });
-
-  } catch (error: any) {
-    console.error('Manual processing error:', error);
-    return NextResponse.json(
-      { error: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: true, data });
+  } catch (error) {
+    return handleError(error);
   }
 }); 

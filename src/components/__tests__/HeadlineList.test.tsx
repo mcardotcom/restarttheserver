@@ -1,133 +1,238 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import HeadlineList from '../HeadlineList'
-import type { SupabaseClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/client'
 
-// Mock the HeadlineCard component to isolate the list's logic
+// Mock the Supabase client
+jest.mock('@/lib/supabase/client', () => ({
+  createClient: jest.fn(() => ({
+    from: jest.fn(() => ({
+      select: jest.fn(() => ({
+        order: jest.fn(() => ({
+          limit: jest.fn(() => ({
+            eq: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                eq: jest.fn().mockResolvedValue({
+                  data: [],
+                  error: null,
+                }),
+              })),
+            })),
+          })),
+        })),
+      })),
+    })),
+  })),
+}))
+
+// Mock the HeadlineCard and AdminHeadlineCard components
 jest.mock('../HeadlineCard', () => {
-  return function DummyHeadlineCard({ headline }: { headline: any }) {
-    return <div data-testid="headline-card">{headline.title}</div>
+  return function MockHeadlineCard({ article }: { article: any }) {
+    return <div data-testid="headline-card">{article.title}</div>
   }
 })
 
-// Create a reusable mock Supabase client
-const createMockSupabase = (data: any, error: any = null) => {
-  const mockFrom = jest.fn().mockReturnValue({
-    select: jest.fn().mockReturnValue({
-      eq: jest.fn().mockReturnValue({
-        order: jest.fn().mockReturnValue({
-          limit: jest.fn().mockResolvedValue({ data, error }),
-        }),
-      }),
-    }),
-  })
-
-  return {
-    from: mockFrom,
-  } as unknown as SupabaseClient
-}
+jest.mock('../AdminHeadlineCard', () => {
+  return function MockAdminHeadlineCard({ headline }: { headline: any }) {
+    return <div data-testid="admin-headline-card">{headline.title}</div>
+  }
+})
 
 describe('HeadlineList', () => {
-  const mockHeadlines = [
-    {
-      id: '1',
-      title: 'Test Headline 1',
-      summary: 'Test Summary 1',
-      source: 'Test Source 1',
-      url: 'https://example.com/1',
-      category: 'breaking',
-      created_at: '2024-03-13T12:00:00Z',
-      updated_at: '2024-03-13T12:00:00Z',
-      flame_score: 5,
-      published_at: '2024-03-13T12:00:00Z',
-      is_published: true,
-      is_pinned: false,
-    },
-    {
-      id: '2',
-      title: 'Test Headline 2',
-      summary: 'Test Summary 2',
-      source: 'Test Source 2',
-      url: 'https://example.com/2',
-      category: 'breaking',
-      created_at: '2024-03-13T12:00:00Z',
-      updated_at: '2024-03-13T12:00:00Z',
-      flame_score: 4,
-      published_at: '2024-03-13T12:00:00Z',
-      is_published: true,
-      is_pinned: false,
-    },
-  ]
+  const mockSupabase = createClient()
 
   beforeEach(() => {
     jest.clearAllMocks()
   })
 
-  it('renders loading state initially', () => {
-    const mockSupabase = createMockSupabase(mockHeadlines)
-    render(<HeadlineList supabase={mockSupabase} category="breaking" />)
-    expect(screen.getByRole('status')).toBeInTheDocument()
-  })
-
-  it('renders headlines after loading', async () => {
-    const mockSupabase = createMockSupabase(mockHeadlines)
-    render(<HeadlineList supabase={mockSupabase} category="breaking" />)
-
-    // Wait for loading state to disappear
-    await waitFor(() => {
-      expect(screen.queryByRole('status')).not.toBeInTheDocument()
-    })
-
-    // Then check for headlines
-    expect(screen.getByText('Test Headline 1')).toBeInTheDocument()
-    expect(screen.getByText('Test Headline 2')).toBeInTheDocument()
-  })
-
-  it('renders error state when fetch fails', async () => {
-    const mockError = new Error('Failed to fetch headlines')
-    const mockSupabase = createMockSupabase(null, mockError)
-    render(<HeadlineList supabase={mockSupabase} category="breaking" />)
-
-    // Wait for loading state to disappear
-    await waitFor(() => {
-      expect(screen.queryByRole('status')).not.toBeInTheDocument()
-    })
-
-    // Then check for error state
-    expect(screen.getByRole('alert')).toBeInTheDocument()
-    expect(screen.getByText('Error loading headlines')).toBeInTheDocument()
-  })
-
-  it('renders empty state when no headlines', async () => {
-    const mockSupabase = createMockSupabase([])
-    render(<HeadlineList supabase={mockSupabase} category="breaking" />)
-
-    // Wait for loading state to disappear
-    await waitFor(() => {
-      expect(screen.queryByRole('status')).not.toBeInTheDocument()
-    })
-
-    // Then check for empty state
-    expect(screen.getByText('No headlines available')).toBeInTheDocument()
-  })
-
-  it('renders with correct ARIA attributes', async () => {
-    const mockSupabase = createMockSupabase(mockHeadlines)
+  it('shows loading state initially', () => {
     render(
-      <HeadlineList 
-        supabase={mockSupabase} 
-        category="breaking" 
-        sectionTitle="Breaking News" 
+      <HeadlineList
+        supabase={mockSupabase}
+        status="published"
+        limit={3}
       />
     )
 
-    // Wait for loading state to disappear
-    await waitFor(() => {
-      expect(screen.queryByRole('status')).not.toBeInTheDocument()
-    })
+    // Should show 3 loading skeletons
+    const skeletons = screen.getAllByRole('generic').filter(
+      el => el.className.includes('animate-pulse')
+    )
+    expect(skeletons).toHaveLength(3)
+  })
 
-    // Then check for list and its attributes
-    const list = screen.getByRole('list')
-    expect(list).toHaveAttribute('aria-label', 'Breaking News headlines')
+  it('shows error state when fetch fails', async () => {
+    // Mock Supabase to return an error
+    const mockError = new Error('Database error')
+    ;(mockSupabase.from as jest.Mock).mockImplementationOnce(() => ({
+      select: jest.fn().mockImplementationOnce(() => ({
+        order: jest.fn().mockImplementationOnce(() => ({
+          limit: jest.fn().mockImplementationOnce(() => ({
+            eq: jest.fn().mockImplementationOnce(() => ({
+              eq: jest.fn().mockImplementationOnce(() => ({
+                eq: jest.fn().mockResolvedValueOnce({
+                  data: null,
+                  error: mockError,
+                }),
+              })),
+            })),
+          })),
+        })),
+      })),
+    }))
+
+    render(
+      <HeadlineList
+        supabase={mockSupabase}
+        status="published"
+      />
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('Error loading headlines')).toBeInTheDocument()
+      expect(screen.getByText('Database error')).toBeInTheDocument()
+    })
+  })
+
+  it('shows empty state when no headlines are found', async () => {
+    // Mock Supabase to return empty data
+    ;(mockSupabase.from as jest.Mock).mockImplementationOnce(() => ({
+      select: jest.fn().mockImplementationOnce(() => ({
+        order: jest.fn().mockImplementationOnce(() => ({
+          limit: jest.fn().mockImplementationOnce(() => ({
+            eq: jest.fn().mockImplementationOnce(() => ({
+              eq: jest.fn().mockImplementationOnce(() => ({
+                eq: jest.fn().mockResolvedValueOnce({
+                  data: [],
+                  error: null,
+                }),
+              })),
+            })),
+          })),
+        })),
+      })),
+    }))
+
+    render(
+      <HeadlineList
+        supabase={mockSupabase}
+        status="published"
+      />
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('No headlines found')).toBeInTheDocument()
+    })
+  })
+
+  it('renders headlines correctly', async () => {
+    const mockHeadlines = [
+      { id: '1', title: 'Headline 1' },
+      { id: '2', title: 'Headline 2' },
+    ]
+
+    // Mock Supabase to return mock data
+    ;(mockSupabase.from as jest.Mock).mockImplementationOnce(() => ({
+      select: jest.fn().mockImplementationOnce(() => ({
+        order: jest.fn().mockImplementationOnce(() => ({
+          limit: jest.fn().mockImplementationOnce(() => ({
+            eq: jest.fn().mockImplementationOnce(() => ({
+              eq: jest.fn().mockImplementationOnce(() => ({
+                eq: jest.fn().mockResolvedValueOnce({
+                  data: mockHeadlines,
+                  error: null,
+                }),
+              })),
+            })),
+          })),
+        })),
+      })),
+    }))
+
+    render(
+      <HeadlineList
+        supabase={mockSupabase}
+        status="published"
+      />
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('Headline 1')).toBeInTheDocument()
+      expect(screen.getByText('Headline 2')).toBeInTheDocument()
+    })
+  })
+
+  it('renders admin headlines when isAdmin is true', async () => {
+    const mockHeadlines = [
+      { id: '1', title: 'Admin Headline 1' },
+      { id: '2', title: 'Admin Headline 2' },
+    ]
+
+    // Mock Supabase to return mock data
+    ;(mockSupabase.from as jest.Mock).mockImplementationOnce(() => ({
+      select: jest.fn().mockImplementationOnce(() => ({
+        order: jest.fn().mockImplementationOnce(() => ({
+          limit: jest.fn().mockImplementationOnce(() => ({
+            eq: jest.fn().mockImplementationOnce(() => ({
+              eq: jest.fn().mockImplementationOnce(() => ({
+                eq: jest.fn().mockResolvedValueOnce({
+                  data: mockHeadlines,
+                  error: null,
+                }),
+              })),
+            })),
+          })),
+        })),
+      })),
+    }))
+
+    render(
+      <HeadlineList
+        supabase={mockSupabase}
+        status="published"
+        isAdmin={true}
+      />
+    )
+
+    await waitFor(() => {
+      const adminCards = screen.getAllByTestId('admin-headline-card')
+      expect(adminCards).toHaveLength(2)
+      expect(screen.getByText('Admin Headline 1')).toBeInTheDocument()
+      expect(screen.getByText('Admin Headline 2')).toBeInTheDocument()
+    })
+  })
+
+  it('renders section title when provided', async () => {
+    const mockHeadlines = [{ id: '1', title: 'Headline 1' }]
+
+    // Mock Supabase to return mock data
+    ;(mockSupabase.from as jest.Mock).mockImplementationOnce(() => ({
+      select: jest.fn().mockImplementationOnce(() => ({
+        order: jest.fn().mockImplementationOnce(() => ({
+          limit: jest.fn().mockImplementationOnce(() => ({
+            eq: jest.fn().mockImplementationOnce(() => ({
+              eq: jest.fn().mockImplementationOnce(() => ({
+                eq: jest.fn().mockResolvedValueOnce({
+                  data: mockHeadlines,
+                  error: null,
+                }),
+              })),
+            })),
+          })),
+        })),
+      })),
+    }))
+
+    render(
+      <HeadlineList
+        supabase={mockSupabase}
+        status="published"
+        sectionTitle="Latest News"
+      />
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('Latest News')).toBeInTheDocument()
+    })
   })
 }) 

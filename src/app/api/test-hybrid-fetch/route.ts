@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
+import { withRateLimit } from '@/lib/rate-limit';
+import { handleError, ErrorType } from '@/lib/error-handling';
 
-export async function GET() {
+export const GET = withRateLimit(async () => {
   try {
     // Get the host from headers to construct the URL
     const headersList = headers();
@@ -23,10 +25,6 @@ export async function GET() {
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error: any) {
-    console.error('Test fetch failed:', error);
-    return NextResponse.json(
-      { error: error.message },
-      { status: 500 }
-    );
+    return handleError(error);
   }
-} 
+}); 

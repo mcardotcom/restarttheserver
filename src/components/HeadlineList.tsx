@@ -2,139 +2,145 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Headline } from '@/types'
+import { Headline, HeadlineListProps } from '@/types'
 import HeadlineCard from './HeadlineCard'
 import AdminHeadlineCard from './AdminHeadlineCard'
+import LoadingSpinner from './LoadingSpinner'
+import ErrorMessage from './ErrorMessage'
 
-interface HeadlineListProps {
-  supabase: ReturnType<typeof createClient>
-  status: 'published' | 'pending' | 'draft'
-  limit?: number
-  sectionTitle?: string
-  isAdmin?: boolean
-}
-
-export default function HeadlineList({ 
-  supabase, 
-  status, 
-  limit = 5, 
-  sectionTitle,
-  isAdmin = false
+export default function HeadlineList({
+  supabase,
+  status = 'published',
+  limit = 10,
+  sectionTitle = 'Latest Headlines',
+  isAdmin = false,
 }: HeadlineListProps) {
   const [headlines, setHeadlines] = useState<Headline[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  useEffect(() => {
+    fetchHeadlines()
+  }, [status, limit])
+
   const fetchHeadlines = async () => {
     try {
       setLoading(true)
       setError(null)
-      
+
       let query = supabase
         .from('headlines')
         .select('*')
-        .order('published_at', { ascending: false })
-        .limit(limit)
+        .order('created_at', { ascending: false })
 
-      // Apply filters based on status
-      if (status === 'published') {
-        query = query
-          .eq('is_published', true)
-          .eq('published', true)
-          .eq('moderation_status', 'approved')
-      } else if (status === 'pending') {
-        query = query
-          .eq('is_published', false)
-          .eq('published', false)
-          .eq('moderation_status', 'pending')
-      } else if (status === 'draft') {
-        query = query
-          .eq('is_published', false)
-          .eq('published', false)
-          .eq('draft', true)
+      if (status) {
+        query = query.eq('status', status)
+      }
+
+      if (limit) {
+        query = query.limit(limit)
       }
 
       const { data, error } = await query
 
       if (error) {
-        console.error('Supabase error:', error)
-        throw new Error(error.message)
+        throw error
       }
 
-      if (!data) {
-        throw new Error('No data returned from database')
-      }
-
-      setHeadlines(data)
+      setHeadlines(data || [])
     } catch (err) {
       console.error('Error fetching headlines:', err)
-      setError(err instanceof Error ? err.message : 'Failed to load headlines')
+      setError('Failed to load headlines. Please try again later.')
     } finally {
       setLoading(false)
     }
   }
 
-  useEffect(() => {
-    fetchHeadlines()
-  }, [status, limit])
+  const handleApprove = async (headline: Headline) => {
+    try {
+      const { error } = await supabase
+        .from('headlines')
+        .update({ status: 'published' })
+        .eq('id', headline.id)
+
+      if (error) {
+        throw error
+      }
+
+      await fetchHeadlines()
+    } catch (err) {
+      console.error('Error approving headline:', err)
+      setError('Failed to approve headline. Please try again.')
+    }
+  }
+
+  const handleReject = async (headline: Headline) => {
+    try {
+      const { error } = await supabase
+        .from('headlines')
+        .update({ status: 'rejected' })
+        .eq('id', headline.id)
+
+      if (error) {
+        throw error
+      }
+
+      await fetchHeadlines()
+    } catch (err) {
+      console.error('Error rejecting headline:', err)
+      setError('Failed to reject headline. Please try again.')
+    }
+  }
+
+  const handleDelete = async (headline: Headline) => {
+    try {
+      const { error } = await supabase
+        .from('headlines')
+        .delete()
+        .eq('id', headline.id)
+
+      if (error) {
+        throw error
+      }
+
+      await fetchHeadlines()
+    } catch (err) {
+      console.error('Error deleting headline:', err)
+      setError('Failed to delete headline. Please try again.')
+    }
+  }
 
   if (loading) {
-    return (
-      <div className="space-y-4">
-        {[...Array(limit)].map((_, i) => (
-          <div 
-            key={i}
-            className="bg-zinc-800 rounded-lg p-4 animate-pulse"
-          >
-            <div className="h-6 bg-zinc-700 rounded w-3/4 mb-2"></div>
-            <div className="h-4 bg-zinc-700 rounded w-1/2"></div>
-          </div>
-        ))}
-      </div>
-    )
+    return <LoadingSpinner />
   }
 
   if (error) {
-    return (
-      <div className="text-red-500 p-4 bg-red-900/50 rounded-lg">
-        <p className="font-semibold">Error loading headlines</p>
-        <p className="text-sm mt-1">{error}</p>
-      </div>
-    )
+    return <ErrorMessage message={error} />
   }
 
-  if (!headlines || headlines.length === 0) {
+  if (headlines.length === 0) {
     return (
-      <div className="text-gray-400 text-center py-8">
-        No headlines found
+      <div className="text-center py-8">
+        <p className="text-gray-400">No headlines found.</p>
       </div>
     )
   }
 
   return (
-    <div className="space-y-4">
-      {sectionTitle && (
-        <h2 className="text-xl font-semibold text-gray-100 mb-4">
-          {sectionTitle}
-        </h2>
-      )}
-      <ul 
-        className="space-y-4"
-        aria-label={`List of ${status} headlines`}
-      >
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-gray-100">{sectionTitle}</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {headlines.map((headline) => (
-          <li key={headline.id}>
-            {isAdmin ? (
-              <AdminHeadlineCard 
-                headline={headline}
-                onStatusChange={fetchHeadlines}
-              />
-            ) : (
-              <HeadlineCard article={headline} />
-            )}
-          </li>
+          <HeadlineCard
+            key={headline.id}
+            headline={headline}
+            onApprove={isAdmin ? handleApprove : undefined}
+            onReject={isAdmin ? handleReject : undefined}
+            onDelete={isAdmin ? handleDelete : undefined}
+            isAdmin={isAdmin}
+          />
         ))}
-      </ul>
+      </div>
     </div>
   )
 } 

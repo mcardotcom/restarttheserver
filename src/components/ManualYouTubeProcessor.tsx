@@ -1,8 +1,7 @@
-import { useState } from 'react';
+'use client';
 
-interface ManualYouTubeProcessorProps {
-  onSuccess?: () => void;
-}
+import { useState } from 'react';
+import { ManualYouTubeProcessorProps } from '@/types';
 
 export default function ManualYouTubeProcessor({ onSuccess }: ManualYouTubeProcessorProps) {
   const [videoUrl, setVideoUrl] = useState('');
@@ -22,11 +21,7 @@ export default function ManualYouTubeProcessor({ onSuccess }: ManualYouTubeProce
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          videoUrl,
-          title,
-          transcript,
-        }),
+        body: JSON.stringify({ videoUrl, title, transcript }),
       });
 
       const data = await response.json();
@@ -35,24 +30,28 @@ export default function ManualYouTubeProcessor({ onSuccess }: ManualYouTubeProce
         throw new Error(data.error || 'Failed to process video');
       }
 
-      setMessage({ type: 'success', text: 'Video processed successfully!' });
+      setMessage({
+        type: 'success',
+        text: 'Video processed successfully!',
+      });
+
       setVideoUrl('');
       setTitle('');
       setTranscript('');
-      
-      // Call the onSuccess callback to trigger a refresh
-      if (onSuccess) {
-        onSuccess();
-      }
+      onSuccess?.();
     } catch (error) {
-      setMessage({ type: 'error', text: error instanceof Error ? error.message : 'Failed to process video' });
+      setMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'An unexpected error occurred',
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="bg-zinc-900 rounded-lg p-6 border border-zinc-800">
+    <div className="bg-zinc-800 rounded-lg p-6">
+      <h2 className="text-xl font-semibold text-gray-100 mb-4">Process YouTube Video</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="videoUrl" className="block text-sm font-medium text-gray-300 mb-1">
@@ -64,7 +63,7 @@ export default function ManualYouTubeProcessor({ onSuccess }: ManualYouTubeProce
             value={videoUrl}
             onChange={(e) => setVideoUrl(e.target.value)}
             required
-            className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            className="w-full px-4 py-2 bg-zinc-900 border border-zinc-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
             placeholder="https://youtube.com/watch?v=..."
           />
         </div>
@@ -79,8 +78,8 @@ export default function ManualYouTubeProcessor({ onSuccess }: ManualYouTubeProce
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
-            className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-            placeholder="Enter video title"
+            className="w-full px-4 py-2 bg-zinc-900 border border-zinc-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            placeholder="Enter the video title..."
           />
         </div>
 
@@ -94,7 +93,7 @@ export default function ManualYouTubeProcessor({ onSuccess }: ManualYouTubeProce
             onChange={(e) => setTranscript(e.target.value)}
             required
             rows={6}
-            className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            className="w-full px-4 py-2 bg-zinc-900 border border-zinc-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
             placeholder="Paste the video transcript here..."
           />
         </div>
