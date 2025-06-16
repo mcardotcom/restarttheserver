@@ -79,59 +79,56 @@ export default async function Home() {
         group.push(sponsorCard);
       } else if (headlineIdx < headlineArticles.length) {
         group.push(headlineArticles[headlineIdx++]);
+      } else if (sponsorIdx < activeSponsorCards.length) {
+        const sponsor = activeSponsorCards[sponsorIdx++];
+        console.log('Adding extra sponsor card:', sponsor)
+        const sponsorCard = {
+          id: sponsor.id,
+          title: sponsor.title,
+          url: sponsor.link,
+          source: sponsor.partner || 'Ad',
+          summary: sponsor.description,
+          flame_score: 0,
+          published_at: sponsor.created_at,
+          created_at: sponsor.created_at,
+          updated_at: sponsor.updated_at,
+          is_published: true,
+          is_pinned: false,
+          is_breaking: false,
+          is_sponsored: true,
+          approved_by: '',
+          category: 'Promotion',
+          metadata: {},
+          draft: false,
+          published: true,
+          moderation_status: 'approved',
+          moderation_notes: ''
+        };
+        group.push(sponsorCard);
       } else {
-        // If we run out of headlines, use a sponsor card
-        if (sponsorIdx < activeSponsorCards.length) {
-          const sponsor = activeSponsorCards[sponsorIdx++];
-          console.log('Adding extra sponsor card:', sponsor)
-          const sponsorCard = {
-            id: sponsor.id,
-            title: sponsor.title,
-            url: sponsor.link,
-            source: sponsor.partner || 'Ad',
-            summary: sponsor.description,
-            flame_score: 0,
-            published_at: sponsor.created_at,
-            created_at: sponsor.created_at,
-            updated_at: sponsor.updated_at,
-            is_published: true,
-            is_pinned: false,
-            is_breaking: false,
-            is_sponsored: true,
-            approved_by: '',
-            category: 'Promotion',
-            metadata: {},
-            draft: false,
-            published: true,
-            moderation_status: 'approved',
-            moderation_notes: ''
-          };
-          group.push(sponsorCard);
-        } else {
-          // If we run out of both headlines and sponsors, use a placeholder
-          group.push({
-            id: `ad-placeholder-extra-${groupIdx}-${i}`,
-            title: 'Ad Placeholder',
-            url: '#',
-            source: 'Ad',
-            summary: 'Your ad could be here! Contact us to sponsor this spot.',
-            flame_score: 0,
-            published_at: '',
-            created_at: '',
-            updated_at: '',
-            is_published: true,
-            is_pinned: false,
-            is_breaking: false,
-            is_sponsored: true,
-            approved_by: '',
-            category: 'Promotion',
-            metadata: {},
-            draft: false,
-            published: true,
-            moderation_status: 'approved',
-            moderation_notes: ''
-          });
-        }
+        // If we run out of both headlines and sponsors, use a placeholder
+        group.push({
+          id: `ad-placeholder-extra-${groupIdx}-${i}`,
+          title: 'Ad Placeholder',
+          url: '#',
+          source: 'Ad',
+          summary: 'Your ad could be here! Contact us to sponsor this spot.',
+          flame_score: 0,
+          published_at: '',
+          created_at: '',
+          updated_at: '',
+          is_published: true,
+          is_pinned: false,
+          is_breaking: false,
+          is_sponsored: true,
+          approved_by: '',
+          category: 'Promotion',
+          metadata: {},
+          draft: false,
+          published: true,
+          moderation_status: 'approved',
+          moderation_notes: ''
+        });
       }
     }
     articleGroups.push(group);
@@ -213,22 +210,24 @@ export default async function Home() {
       </header>
 
       <main className="min-h-screen bg-zinc-950">
-        <div className="container mx-auto px-4 py-8">
+        <div className="max-w-[1600px] mx-auto px-4 py-8">
           <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 grid-rows-auto-fr">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {allCards.map((article) => (
                 <ErrorBoundary key={article.id}>
-                  {article.source === 'Ad' || article.id?.toString().includes('ad-placeholder') ? (
-                    <SponsorCard
-                      title={article.title}
-                      summary={article.summary}
-                      url={article.url}
-                      category={article.category}
-                      partner={article.is_sponsored ? article.source : 'Ad'}
-                    />
-                  ) : (
-                    <HeadlineCard article={article} />
-                  )}
+                  <div className="min-w-[280px]">
+                    {(article.source === 'Ad' || article.category === 'Promotion' || article.is_sponsored) ? (
+                      <SponsorCard
+                        title={article.title}
+                        summary={article.summary}
+                        url={article.url}
+                        category={article.category}
+                        partner={article.source}
+                      />
+                    ) : (
+                      <HeadlineCard headline={article} />
+                    )}
+                  </div>
                 </ErrorBoundary>
               ))}
             </div>

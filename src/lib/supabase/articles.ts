@@ -12,7 +12,7 @@ export async function getArticles() {
   const { data, error } = await supabase
     .from('headlines')
     .select('*')
-    .eq('published', true)
+    .eq('is_published', true)
     .order('published_at', { ascending: false })
     .limit(60)
 
