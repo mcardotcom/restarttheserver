@@ -1,24 +1,39 @@
-import { NextResponse, type NextRequest } from 'next/server'
+import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-export function middleware(request: NextRequest) {
-  // Handle password reset redirect
-  if (request.nextUrl.hash && request.nextUrl.hash.includes('type=recovery')) {
-    const redirectUrl = new URL('/reset-password', request.url)
-    redirectUrl.hash = request.nextUrl.hash
-    return NextResponse.redirect(redirectUrl)
+export async function middleware(request: NextRequest) {
+  const res = NextResponse.next();
+  const supabase = createMiddlewareClient({ req: request, res });
+
+  // Add security headers
+  res.headers.set('X-Frame-Options', 'DENY');
+  res.headers.set('X-Content-Type-Options', 'nosniff');
+  res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.headers.set(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:;"
+  );
+  res.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+
+  // Check if we have a session
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  // If accessing admin routes without a session, redirect to login
+  if (request.nextUrl.pathname.startsWith('/admin') && !session) {
+    const redirectUrl = new URL('/login', request.url);
+    redirectUrl.searchParams.set('redirectTo', request.nextUrl.pathname);
+    return NextResponse.redirect(redirectUrl);
   }
-  return NextResponse.next()
+
+  return res;
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * Feel free to modify this pattern to include more paths.
-     */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/admin/:path*',
+    '/api/admin/:path*',
   ],
-} 
+}; 

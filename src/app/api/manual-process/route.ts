@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { analyzeArticle } from '@/app/api/cron/hybrid-fetch/route';
 import { normalizeUrl } from '@/lib/utils';
+import { createClient } from '@/lib/supabase/server';
+import { withRateLimit } from '@/lib/rate-limit';
 
-export async function POST(request: NextRequest) {
+// Wrap the handler with rate limiting
+export const POST = withRateLimit(async (request: NextRequest) => {
   try {
     const { url } = await request.json();
 
@@ -103,4 +106,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}); 

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
+import { withRateLimit } from '@/lib/rate-limit';
+import { getTranscript } from '@/lib/youtube/transcript';
+import { analyzeTranscript } from '@/lib/youtube/analysis';
 
 // Initialize clients
 const supabase = createClient(
@@ -10,7 +13,8 @@ const supabase = createClient(
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-export async function POST(request: NextRequest) {
+// Wrap the handler with rate limiting
+export const POST = withRateLimit(async (request: NextRequest) => {
   try {
     const { videoUrl, title, transcript } = await request.json();
 
@@ -106,4 +110,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}); 

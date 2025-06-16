@@ -61,8 +61,8 @@ interface RssItem {
 }
 
 // Add these constants at the top with other constants
-const TEST_MODE = true; // Set to false in production
-const MAX_ARTICLES = 15; // Limit for testing
+const TEST_MODE = process.env.NODE_ENV === 'development';
+const MAX_ARTICLES = process.env.NODE_ENV === 'development' ? 15 : 100; // Higher limit for production
 
 // Keyword categories with weights for scoring
 const KEYWORD_CATEGORIES = {

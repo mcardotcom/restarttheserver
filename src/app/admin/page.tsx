@@ -6,10 +6,11 @@ import { Headline } from '@/types'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import ManualArticleProcessor from '@/components/ManualArticleProcessor'
 import SponsorCardEditor from '@/components/SponsorCardEditor'
-import { RefreshCw, Edit, Check, X } from 'lucide-react'
+import { RefreshCw, Edit, Check, X, LogOut } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { Flame } from 'lucide-react'
 import ManualYouTubeProcessor from '@/components/ManualYouTubeProcessor'
+import { useRouter } from 'next/navigation'
 
 export default function AdminPage() {
   const [articles, setArticles] = useState<Headline[]>([])
@@ -20,6 +21,16 @@ export default function AdminPage() {
   const [supabase] = useState<SupabaseClient>(() => createClient())
   const [fetching, setFetching] = useState(false)
   const [publishedCount, setPublishedCount] = useState<number>(0)
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut()
+      router.push('/login')
+    } catch (error) {
+      console.error('Error signing out:', error)
+    }
+  }
 
   const fetchPublishedCount = async () => {
     try {
@@ -206,6 +217,13 @@ export default function AdminPage() {
             <div className="text-gray-300 text-lg font-medium">
               Published: {publishedCount}
             </div>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              Logout
+            </button>
           </div>
         </div>
       </header>
