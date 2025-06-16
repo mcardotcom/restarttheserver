@@ -1,8 +1,9 @@
 -- Create admin_users table first
 CREATE TABLE IF NOT EXISTS admin_users (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    user_id UUID NOT NULL UNIQUE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+    id UUID PRIMARY KEY REFERENCES auth.users(id),
+    email TEXT UNIQUE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 -- Create sponsor_cards table
@@ -35,8 +36,15 @@ CREATE POLICY "Allow admin users to manage sponsor cards" ON sponsor_cards
     FOR ALL
     TO authenticated
     USING (
-        auth.uid() IN (
-            SELECT id FROM user_profiles WHERE role = 'admin'
+        EXISTS (
+            SELECT 1 FROM user_profiles 
+            WHERE id = auth.uid() 
+            AND role = 'admin'
+        )
+        OR 
+        EXISTS (
+            SELECT 1 FROM admin_users 
+            WHERE id = auth.uid()
         )
     );
 
