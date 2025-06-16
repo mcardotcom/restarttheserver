@@ -2,16 +2,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { WHITELISTED_DOMAINS, TITLE_RULES } from '@/config/curation'
 import { NewsDataArticle } from '@/types/news'
+import { withCronRateLimit } from '@/lib/rate-limit'
+import { handleError, ErrorType } from '@/lib/error-handling'
 
 // The main handler for the cron job request
-export async function POST(request: NextRequest) {
-  // 1. Authenticate the cron job request
-  const authHeader = request.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return new Response('Unauthorized', { status: 401 })
-  }
-
+export const POST = withCronRateLimit(async (request: NextRequest) => {
   try {
+    // 1. Authenticate the cron job request
+    const authHeader = request.headers.get('authorization')
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     // 2. Fetch recent articles from Newsdata.io
     const newsApiUrl = `https://newsdata.io/api/1/news?apikey=${process.env.NEWSDATA_API_KEY}&q=AI%20OR%20startup%20OR%20technology&language=en&domain=${WHITELISTED_DOMAINS.join(',')}`
     const newsResponse = await fetch(newsApiUrl)
@@ -68,9 +70,9 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Cron job failed:', error.message)
-    return new Response(`Error: ${error.message}`, { status: 500 })
+    return handleError(error)
   }
-}
+})
 
 // Helper function to validate articles
 function isArticleValid(article: NewsDataArticle): boolean {

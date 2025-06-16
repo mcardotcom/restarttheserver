@@ -2,11 +2,13 @@ import { NextResponse } from 'next/server'
 import { fetchNewsFromNewsData } from '@/lib/news/newsdata'
 import { createClient } from '@/lib/supabase/server'
 import { NewsDataArticle } from '@/types/news'
+import { withRateLimit } from '@/lib/rate-limit'
+import { handleError, ErrorType } from '@/lib/error-handling'
 
 export const runtime = 'edge'
 export const revalidate = 3600 // Revalidate every hour
 
-export async function GET() {
+export const GET = withRateLimit(async () => {
   try {
     // Fetch news from Newsdata.io
     const newsData = await fetchNewsFromNewsData()
@@ -50,10 +52,6 @@ export async function GET() {
       count: data.length
     })
   } catch (error) {
-    console.error('Error fetching news:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch news' },
-      { status: 500 }
-    )
+    return handleError(error)
   }
-} 
+}) 

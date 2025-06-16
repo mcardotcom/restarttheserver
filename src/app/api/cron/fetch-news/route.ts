@@ -1,7 +1,9 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { fetchNewsFromNewsData } from '@/lib/news/newsdata'
 import { createClient } from '@/lib/supabase/server'
 import { NewsDataArticle } from '@/types/news'
+import { withCronRateLimit } from '@/lib/rate-limit'
+import { handleError, ErrorType } from '@/lib/error-handling'
 
 // Verify the request is from a valid cron job
 const isValidCronRequest = (request: Request) => {
@@ -11,7 +13,7 @@ const isValidCronRequest = (request: Request) => {
 
 export const runtime = 'edge'
 
-export async function GET(request: Request) {
+export const GET = withCronRateLimit(async (request: NextRequest) => {
   // Verify the request
   if (!isValidCronRequest(request)) {
     return NextResponse.json(
@@ -63,10 +65,6 @@ export async function GET(request: Request) {
       count: data.length
     })
   } catch (error) {
-    console.error('Error fetching news:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch news' },
-      { status: 500 }
-    )
+    return handleError(error)
   }
-} 
+}) 

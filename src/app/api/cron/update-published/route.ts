@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { withCronRateLimit } from '@/lib/rate-limit'
+import { handleError, ErrorType } from '@/lib/error-handling'
 
-export async function POST(request: NextRequest) {
+export const POST = withCronRateLimit(async (request: NextRequest) => {
   // Verify the request
   const authHeader = request.headers.get('authorization')
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return new Response('Unauthorized', { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   try {
@@ -36,10 +38,6 @@ export async function POST(request: NextRequest) {
       count: data.length
     })
   } catch (error) {
-    console.error('Error:', error)
-    return NextResponse.json(
-      { error: 'Failed to update articles' },
-      { status: 500 }
-    )
+    return handleError(error)
   }
-} 
+}) 

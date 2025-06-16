@@ -4,6 +4,8 @@ import OpenAI from 'openai';
 import Parser from 'rss-parser';
 import { RSS_FEED_WHITELIST } from '@/config/rss-feeds';
 import { normalizeUrl } from '@/lib/utils';
+import { withCronRateLimit } from '@/lib/rate-limit';
+import { handleError, ErrorType } from '@/lib/error-handling';
 
 // --- INITIALIZE CLIENTS ---
 // Validate required environment variables
@@ -61,8 +63,8 @@ interface RssItem {
 }
 
 // Add these constants at the top with other constants
-const TEST_MODE = process.env.NODE_ENV === 'development';
-const MAX_ARTICLES = process.env.NODE_ENV === 'development' ? 15 : 100; // Higher limit for production
+const MAX_ARTICLES = parseInt(process.env.MAX_ARTICLES_PER_FETCH || '100', 10);
+const IS_DEVELOPMENT = process.env.NODE_ENV === 'development';
 
 // Keyword categories with weights for scoring
 const KEYWORD_CATEGORIES = {
@@ -348,18 +350,16 @@ function calculateArticleScore(text: string): number {
 }
 
 // --- MAIN HANDLER ---
-export async function POST(request: NextRequest) {
-  // 1. Authenticate the cron job request
-  const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    console.error('Unauthorized request attempt');
-    return new Response('Unauthorized', { status: 401 });
-  }
-
+export const POST = withCronRateLimit(async (request: NextRequest) => {
   try {
+    // 1. Authenticate the cron job request
+    const authHeader = request.headers.get('authorization');
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     console.log('Starting hybrid article ingestion process...');
-    console.log('Test mode:', TEST_MODE ? 'ON' : 'OFF');
-    if (TEST_MODE) {
+    if (IS_DEVELOPMENT) {
       console.log(`Article limit: ${MAX_ARTICLES}`);
     }
 
@@ -371,13 +371,11 @@ export async function POST(request: NextRequest) {
     const allArticles = [...rssArticles, ...newsDataArticles];
     console.log(`Total articles before deduplication: ${allArticles.length}`);
 
-    // Apply test mode limit if enabled
-    const limitedArticles = TEST_MODE 
-      ? allArticles.slice(0, MAX_ARTICLES)
-      : allArticles;
+    // Apply article limit
+    const limitedArticles = allArticles.slice(0, MAX_ARTICLES);
 
-    if (TEST_MODE && allArticles.length > MAX_ARTICLES) {
-      console.log(`Test mode: limiting to ${MAX_ARTICLES} articles`);
+    if (allArticles.length > MAX_ARTICLES) {
+      console.log(`Limiting to ${MAX_ARTICLES} articles`);
     }
 
     // 3. De-duplicate articles based on URL
@@ -431,9 +429,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('Cron job failed:', error.message);
-    return new Response(`Error: ${error.message}`, { status: 500 });
+    return handleError(error);
   }
-}
+});
 
 // --- HELPER FUNCTIONS ---
 

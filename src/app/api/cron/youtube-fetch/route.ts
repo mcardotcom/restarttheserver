@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { YoutubeTranscript } from 'youtube-transcript'
 import OpenAI from 'openai'
+import { withCronRateLimit } from '@/lib/rate-limit'
+import { handleError, ErrorType } from '@/lib/error-handling'
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -15,14 +17,14 @@ interface YouTubeArticle {
 }
 
 // The main handler for the cron job request
-export async function POST(request: NextRequest) {
-  // 1. Authenticate the cron job request
-  const authHeader = request.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return new Response('Unauthorized', { status: 401 })
-  }
-
+export const POST = withCronRateLimit(async (request: NextRequest) => {
   try {
+    // 1. Authenticate the cron job request
+    const authHeader = request.headers.get('authorization')
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     // TODO: Implement YouTube API fetch
     const newVideos: YouTubeArticle[] = []
     console.log(`Found ${newVideos.length} new videos to process.`)
@@ -86,10 +88,9 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error: any) {
-    console.error('YouTube cron job failed:', error.message)
-    return new Response(`Error: ${error.message}`, { status: 500 })
+    return handleError(error)
   }
-}
+})
 
 async function getTranscript(videoUrl: string): Promise<string | null> {
   try {

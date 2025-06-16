@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createErrorResponse, ErrorType, RateLimitError } from './error-handling';
 
 interface RateLimitConfig {
   interval: number; // Time window in milliseconds
@@ -52,31 +53,58 @@ class RateLimitStore {
   }
 }
 
-// Create a singleton instance
+// Create a singleton instance with configurable limits
 const rateLimitStore = new RateLimitStore({
-  interval: 60 * 1000, // 1 minute
-  maxRequests: 60, // 60 requests per minute
+  interval: parseInt(process.env.RATE_LIMIT_INTERVAL || '60000', 10), // Default: 1 minute
+  maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '60', 10), // Default: 60 requests per minute
+});
+
+// Create a stricter rate limit store for cron jobs
+const cronRateLimitStore = new RateLimitStore({
+  interval: parseInt(process.env.CRON_RATE_LIMIT_INTERVAL || '300000', 10), // Default: 5 minutes
+  maxRequests: parseInt(process.env.CRON_RATE_LIMIT_MAX_REQUESTS || '10', 10), // Default: 10 requests per 5 minutes
 });
 
 export function withRateLimit(handler: (req: NextRequest) => Promise<NextResponse>) {
   return async (req: NextRequest) => {
-    // Get client IP or use a default key
-    const ip = req.headers.get('x-forwarded-for') || 'unknown';
-    const key = `rate-limit:${ip}`;
+    try {
+      // Get client IP or use a default key
+      const ip = req.headers.get('x-forwarded-for') || 'unknown';
+      const key = `rate-limit:${ip}`;
 
-    if (rateLimitStore.isRateLimited(key)) {
-      const remainingTime = rateLimitStore.getRemainingTime(key);
-      return NextResponse.json(
-        { error: 'Too many requests' },
-        {
-          status: 429,
-          headers: {
-            'Retry-After': Math.ceil(remainingTime / 1000).toString(),
-          },
-        }
-      );
+      if (rateLimitStore.isRateLimited(key)) {
+        const remainingTime = rateLimitStore.getRemainingTime(key);
+        throw new RateLimitError(`Rate limit exceeded. Try again in ${Math.ceil(remainingTime / 1000)} seconds.`);
+      }
+
+      return await handler(req);
+    } catch (error) {
+      if (error instanceof RateLimitError) {
+        return createErrorResponse(ErrorType.RATE_LIMIT, error.message);
+      }
+      throw error; // Re-throw other errors to be handled by the global error handler
     }
+  };
+}
 
-    return handler(req);
+export function withCronRateLimit(handler: (req: NextRequest) => Promise<NextResponse>) {
+  return async (req: NextRequest) => {
+    try {
+      // Get client IP or use a default key
+      const ip = req.headers.get('x-forwarded-for') || 'unknown';
+      const key = `cron-rate-limit:${ip}`;
+
+      if (cronRateLimitStore.isRateLimited(key)) {
+        const remainingTime = cronRateLimitStore.getRemainingTime(key);
+        throw new RateLimitError(`Cron job rate limit exceeded. Try again in ${Math.ceil(remainingTime / 1000)} seconds.`);
+      }
+
+      return await handler(req);
+    } catch (error) {
+      if (error instanceof RateLimitError) {
+        return createErrorResponse(ErrorType.RATE_LIMIT, error.message);
+      }
+      throw error; // Re-throw other errors to be handled by the global error handler
+    }
   };
 } 

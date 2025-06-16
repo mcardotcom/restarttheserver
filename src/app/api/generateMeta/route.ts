@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
+import { withRateLimit } from '@/lib/rate-limit'
+import { handleError, ErrorType } from '@/lib/error-handling'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
-export async function POST(request: NextRequest) {
+export const POST = withRateLimit(async (request: NextRequest) => {
   try {
     const { title, url } = await request.json()
 
@@ -73,10 +75,6 @@ Respond in JSON format:
     return NextResponse.json(metadata)
 
   } catch (error) {
-    console.error('Error generating metadata:', error)
-    return NextResponse.json(
-      { error: 'Failed to generate metadata' },
-      { status: 500 }
-    )
+    return handleError(error)
   }
-} 
+}) 
