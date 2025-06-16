@@ -10,9 +10,10 @@ export async function middleware(request: NextRequest) {
   res.headers.set('X-Frame-Options', 'DENY');
   res.headers.set('X-Content-Type-Options', 'nosniff');
   res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://saicsblgnrrxvkncabni.supabase.co';
   res.headers.set(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:;"
+    `default-src 'self'; connect-src 'self' ${supabaseUrl}; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:;`
   );
   res.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
 
