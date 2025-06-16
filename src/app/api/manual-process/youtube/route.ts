@@ -47,13 +47,18 @@ export const POST = withRateLimit(async (request: NextRequest) => {
         source: 'YouTube',
         summary: analysis.summary,
         flame_score: analysis.hype_score,
-        category: analysis.category,
+        category: 'video',
         published_at: new Date().toISOString(),
         moderation_status: 'pending',
         is_published: false,
         draft: true,
         published: false,
-        ai_summary: true
+        ai_summary: true,
+        media_type: 'video',
+        metadata: {
+          media_type: 'video',
+          transcript: truncatedTranscript.substring(0, 1000) // Store first 1000 chars of transcript
+        }
       }])
       .select()
       .single();
