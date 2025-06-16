@@ -63,7 +63,7 @@ export default function AdminHeadlinesList({ articles }: AdminHeadlinesListProps
   const pendingHeadlines = articles.filter(h => h.moderation_status !== 'rejected')
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
+    <div className="bg-white rounded-lg shadow-md p-6 relative z-10">
       <h2 className="text-2xl font-bold mb-6">Pending Headlines ({pendingHeadlines.length})</h2>
 
       <div className="space-y-4">

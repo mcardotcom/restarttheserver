@@ -82,7 +82,7 @@ export default function AdminHeadlineCard({
 
   return (
     <article 
-      className="bg-zinc-800 rounded-lg p-4 hover:bg-zinc-700 transition-colors"
+      className="bg-zinc-800 rounded-lg p-4 hover:bg-zinc-700 transition-colors relative z-10"
       aria-labelledby={`headline-${id}`}
     >
       <div className="flex items-center gap-6">
