@@ -181,4 +181,29 @@ src/
 4. **Performance**
    - Optimize database queries
    - Use proper caching
-   - Monitor performance metrics 
+   - Monitor performance metrics
+
+## Content Types and Media Handling
+
+### YouTube Videos
+
+1. **Processing**
+   - Videos are processed through both manual and automated routes
+   - Transcripts are fetched and analyzed using GPT-4
+   - Videos are categorized with `category: 'video'` and `media_type: 'video'`
+
+2. **Database Fields**
+   - `media_type`: Specifies the content type (e.g., 'video', 'article')
+   - `category`: Content category (e.g., 'video', 'Promotion')
+   - `metadata`: Contains additional media-specific data
+     - For videos: transcript excerpt and media type
+
+3. **Manual Processing**
+   - Use the admin panel's YouTube processor
+   - Provide video URL, title, and transcript
+   - System automatically sets appropriate media type and category
+
+4. **Automated Processing**
+   - Cron job fetches new videos
+   - Processes transcripts and generates summaries
+   - Sets proper categorization automatically 
