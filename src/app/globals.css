@@ -17,4 +17,63 @@
 body {
   color: rgb(var(--foreground-rgb));
   background: rgb(var(--background-rgb));
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  z-index: 0;
+  pointer-events: none;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  opacity: 0.22;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255,255,255,0.09) 0px,
+    rgba(255,255,255,0.09) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+  animation: crt-flicker 1.5s infinite;
+}
+
+body.card-hovering::before {
+  box-shadow: 0 0 80px 20px rgba(239,68,68,0.25), 0 0 0 0 transparent;
+  /* The red glow, matching Tailwind's red-500 */
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  left: 0;
+  width: 100vw;
+  height: 4px;
+  top: 40vh;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.18) 40%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0.18) 60%, transparent 100%);
+  opacity: 0;
+  filter: blur(1.5px);
+  animation: crt-glitch 7s infinite;
+}
+
+@keyframes crt-flicker {
+  0%, 100% { opacity: 0.22; }
+  10% { opacity: 0.32; }
+  20% { opacity: 0.14; }
+  30% { opacity: 0.28; }
+  40% { opacity: 0.12; }
+  50% { opacity: 0.30; }
+  60% { opacity: 0.16; }
+  70% { opacity: 0.26; }
+  80% { opacity: 0.13; }
+  90% { opacity: 0.29; }
+}
+
+@keyframes crt-glitch {
+  0%, 97%, 100% { opacity: 0; }
+  98% { opacity: 0.7; top: 40vh; }
+  99% { opacity: 0.2; top: 42vh; }
 } 

@@ -201,7 +201,7 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <header className="sticky top-0 z-10 bg-black/75 backdrop-blur h-32 flex items-center justify-center flex-col h-full w-full gap-y-1 text-center">
+      <header className="sticky top-0 z-30 bg-black/75 backdrop-blur h-32 flex items-center justify-center flex-col h-full w-full gap-y-1 text-center">
         <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight m-0">
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-red-700 uppercase">RESTART_</span>
           <span className="text-zinc-100">The Server</span>

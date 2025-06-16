@@ -25,8 +25,21 @@ export default function SponsorCard({
     return text;
   };
 
+  // Add red glow to CRT background on hover
+  const handleMouseEnter = () => {
+    document.body.classList.add('card-hovering');
+  };
+  const handleMouseLeave = () => {
+    document.body.classList.remove('card-hovering');
+  };
+
   return (
-    <div className="relative h-[360px] flex flex-col justify-between rounded-lg border p-5 bg-zinc-800 border-zinc-700 hover:border-red-500/50 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] transition-all duration-300">
+    <div
+      className="relative z-20 h-[360px] flex flex-col justify-between rounded-lg border p-5 bg-zinc-800 border-zinc-700 hover:border-red-500/50 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] transition-all duration-300"
+      style={{ backgroundColor: '#27272a' }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       {/* Sponsored Label & Partner */}
       <div className="flex items-center justify-between mb-2">
         <span className="bg-red-600 text-xs text-white font-bold px-2 py-0.5 rounded">Sponsored</span>

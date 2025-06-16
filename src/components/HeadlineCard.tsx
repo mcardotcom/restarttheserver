@@ -99,8 +99,21 @@ export default function HeadlineCard({
     }
   };
 
+  // Add red glow to CRT background on hover
+  const handleMouseEnter = () => {
+    document.body.classList.add('card-hovering');
+  };
+  const handleMouseLeave = () => {
+    document.body.classList.remove('card-hovering');
+  };
+
   return (
-    <div className={`h-[360px] flex flex-col justify-between rounded-lg border p-5 bg-zinc-800 border-zinc-700 hover:border-red-500/50 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] transition-all duration-300 ${isSponsored ? 'bg-zinc-900 border-yellow-600' : ''}`}>
+    <div
+      className={`relative z-20 h-[360px] flex flex-col justify-between rounded-lg border p-5 bg-zinc-800 border-zinc-700 hover:border-red-500/50 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] transition-all duration-300 ${isSponsored ? 'bg-zinc-900 border-yellow-600' : ''}`}
+      style={{ backgroundColor: isSponsored ? '#18181b' : '#27272a' }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       {/* Top Row: Flame Score & Source */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1">
